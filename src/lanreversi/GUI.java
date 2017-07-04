@@ -1,9 +1,10 @@
 package lanreversi;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
@@ -63,9 +64,9 @@ public class GUI{
         Box bottomPane=Box.createHorizontalBox();
         bottomPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 5, 8));
 
-        JButton startButton=new JButton(new ImageIcon("res\\keys_ico\\startgame_16.png"));
-        JButton styleButton=new JButton(new ImageIcon("res\\keys_ico\\style_16.png"));
-        JButton colorButton=new JButton(new ImageIcon("res\\keys_ico\\black_16.png"));
+        final JButton startButton=new JButton(new ImageIcon("res\\keys_ico\\startgame_16.png"));
+        final JButton styleButton=new JButton(new ImageIcon("res\\keys_ico\\style_16.png"));
+        final JButton colorButton=new JButton(new ImageIcon("res\\keys_ico\\black_16.png"));
 
         startButton.setToolTipText("Начать новую игру");
         styleButton.setToolTipText(board.getCurrentStyleName());
@@ -82,6 +83,23 @@ public class GUI{
         frame.setVisible(true);
 
         //Создаем обработчики событий для кнопок
+        styleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.nextStyle();
+                styleButton.setToolTipText(board.getCurrentStyleName());
+            }
+        });
+
+        colorButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                board.revert();
+                if(board.getPlayerColor()==Cell.BLACK)colorButton.setIcon(new ImageIcon("res\\keys_ico\\black_16.png"));
+                if(board.getPlayerColor()==Cell.WHITE)colorButton.setIcon(new ImageIcon("res\\keys_ico\\white_16.png"));
+                colorButton.setToolTipText("Ваш цвет "+(board.getPlayerColor()==Cell.BLACK?"черный":"белый"));
+            }
+        });
 
     }
 

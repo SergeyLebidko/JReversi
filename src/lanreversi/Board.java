@@ -53,19 +53,34 @@ public final class Board extends JPanel{
         return opponentColor;
     }
 
+    //Метод изменяет цвет фишек игрока и противника
+    public void revert(){
+        int t;
+        t=playerColor;
+        playerColor=opponentColor;
+        opponentColor=t;
+        for(int i=0;i<rows;i++)
+            for(int j=0;j<cols;j++){
+                if(c[i][j].isEmpty())continue;
+                if(c[i][j].getContent()==playerColor){
+                    c[i][j].setContent(opponentColor);
+                    continue;
+                }
+                c[i][j].setContent(playerColor);
+            }
+    }
+
     //Метод возвращает имя текущего стиля
     public String getCurrentStyleName(){
         return Cell.getStyleNames()[currentStyle];
     }
 
-    //Метод изменяет цвет фишек игрока и противника
-    public void revert(){
-        //TODO
-    }
-
     //Метод изменяет стиль фишек
     public void nextStyle(){
-        //TODO
+        currentStyle++;
+        if(currentStyle>=Cell.getCountStyles())currentStyle=0;
+        for(int i=0;i<rows;i++)
+            for(int j=0;j<cols;j++)c[i][j].setStyle(currentStyle);
     }
 
 }

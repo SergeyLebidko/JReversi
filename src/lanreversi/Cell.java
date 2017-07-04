@@ -64,7 +64,7 @@ public class Cell extends JPanel{
     }
 
     //Гетер количества доступных стилей ячеек
-    public int countStyles(){
+    public static int getCountStyles(){
         return styleNames.length;
     }
 
@@ -75,7 +75,7 @@ public class Cell extends JPanel{
 
     //Установка нового стиля для ячейки
     public void setStyle(int newStyle){
-        if((newStyle<0) | (newStyle>=countStyles()))return;
+        if((newStyle<0) | (newStyle>=getCountStyles()))return;
         style=newStyle;
         if(isEmpty())return;
         repaint();
