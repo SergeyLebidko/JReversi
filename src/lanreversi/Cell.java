@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MediaTracker;
-import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -27,7 +26,7 @@ public class Cell extends JPanel{
     private final int y;
 
     //Стили ячеек
-    private final String[] styleNames={"Переплетение", "Меандр", "Восточный узор", "Классика", "Квадрат"};
+    private static final String[] styleNames={"Переплетение", "Меандр", "Восточный узор", "Классика", "Квадрат"};
     private int style=0;    //Номер используемого стиля
 
     //Конструктор класса устанавливает координаты ячейки, ее содержимое (пустая ячейка, белая или черная шашка) и стиль шашки
@@ -70,7 +69,7 @@ public class Cell extends JPanel{
     }
 
     //Гетер списка имен стилей
-    public String[] getStyleNames(){
+    public static String[] getStyleNames(){
         return styleNames;
     }
 
@@ -78,6 +77,7 @@ public class Cell extends JPanel{
     public void setStyle(int newStyle){
         if((newStyle<0) | (newStyle>=countStyles()))return;
         style=newStyle;
+        if(isEmpty())return;
         repaint();
     }
 

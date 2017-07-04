@@ -4,11 +4,15 @@ import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-public class Board extends JPanel{
+public final class Board extends JPanel{
 
     //Количество клеток на игровом поле
     private final int cols;    //Количество столбцов
     private final int rows;    //Количество строк
+
+    private int playerColor=Cell.BLACK;    //Цвет фишек игрока
+    private int opponentColor=Cell.WHITE;  //Цвет фишек противника
+    private int currentStyle=0;            //Текущий стиль ячеек
 
     private final Cell[][] c;  //Клетки игрового поля
 
@@ -23,6 +27,35 @@ public class Board extends JPanel{
                 c[i][j]=new Cell(i, j, Cell.EMPTY, 0);
                 this.add(c[i][j]);
             }
+        clear();
     }
-    
+
+    //Метод сбрасывает игровое поле до начальной конфигурации
+    public void clear(){
+        for(int i=0;i<rows;i++)
+            for(int j=0;j<cols;j++){
+                c[i][j].setContent(Cell.EMPTY);
+                c[i][j].setStyle(currentStyle);
+            }
+        c[rows/2-1][cols/2-1].setContent(playerColor);
+        c[rows/2][cols/2].setContent(playerColor);
+        c[rows/2][cols/2-1].setContent(opponentColor);
+        c[rows/2-1][cols/2].setContent(opponentColor);
+    }
+
+    //Метод возвращает текущий цвет фишек игрока
+    public int getPlayerColor(){
+        return playerColor;
+    }
+
+    //Метод возвращает текущий цвет фишек фишек противника
+    public int getOpponentColor(){
+        return opponentColor;
+    }
+
+    //Метод возвращает имя текущего стиля
+    public String getCurrentStyleName(){
+        return Cell.getStyleNames()[currentStyle];
+    }
+
 }
