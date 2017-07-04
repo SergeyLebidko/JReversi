@@ -78,8 +78,10 @@ public class GUI{
         bottomPane.add(colorButton);
         frame.add(bottomPane, BorderLayout.SOUTH);
 
-        //Выводим главное окно на экран и сразу же перемещаем его к центру экрана
+        //Выводим главное окно на экран
         frame.setVisible(true);
+
+        //Создаем обработчики событий для кнопок
 
     }
 

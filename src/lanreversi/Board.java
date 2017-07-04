@@ -58,4 +58,14 @@ public final class Board extends JPanel{
         return Cell.getStyleNames()[currentStyle];
     }
 
+    //Метод изменяет цвет фишек игрока и противника
+    public void revert(){
+        //TODO
+    }
+
+    //Метод изменяет стиль фишек
+    public void nextStyle(){
+        //TODO
+    }
+
 }
