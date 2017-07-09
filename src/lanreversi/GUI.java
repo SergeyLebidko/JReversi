@@ -11,6 +11,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 public class GUI{
 
@@ -101,6 +102,40 @@ public class GUI{
             }
         });
 
+    }
+
+    //Метод запрашивает имя пользователя
+    public String getUserName() {
+        String name = "";
+        String enabledChars = "QAZWSXEDCRFVTGBYHNUJMIKOLPqazwsxedcrfvtgbyhnujmikolpЙФЯЦЫЧУВСКАМЕПИНРТГОЬШЛБЩДЮЗЖХЭЪЁйфяцычувскамепинртгоьшлбщдюзжхэъё0123456789 ";
+        while (true) {
+            name = JOptionPane.showInputDialog(frame, "Введите свое имя", "", JOptionPane.QUESTION_MESSAGE);
+            if (name != null) {
+                name = name.trim();
+            }
+            if (name == null || name.equals("")) {
+                JOptionPane.showMessageDialog(frame, "Имя не должно быть пустым!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            boolean isFind = false;
+            for (char ch : name.toCharArray()) {
+                if (enabledChars.indexOf(ch) == (-1)) {
+                    JOptionPane.showMessageDialog(frame, "Имя может содержать только русские или латинские буквы, цифры и пробел!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    isFind = true;
+                    break;
+                }
+            }
+            if (isFind) {
+                continue;
+            }
+            break;
+        }
+        return name;
+    }
+
+    //Метод выводит сообщение
+    public void showMessage(String msg, String title){
+        JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
 }
