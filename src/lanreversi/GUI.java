@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
@@ -12,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import static lanreversi.JReversi.*;
 
 public class GUI{
 
@@ -84,6 +86,26 @@ public class GUI{
         frame.setVisible(true);
 
         //Создаем обработчики событий для кнопок
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                //Игра еще не была запущена - создаем запускаем новую игру
+                if(game==null){
+                    game=new Game();
+                    game.start();
+                    return;
+                }
+
+                //Игра была ранее запущена (активность игры в данный момент роли не играет)
+                game.stopThread();
+                while (game.isAlive()) {}
+                game=new Game();
+                game.start();
+
+            }
+        });
+
         styleButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -105,7 +127,7 @@ public class GUI{
     }
 
     //Метод запрашивает имя пользователя
-    public String getUserName() {
+    public String getPlayerName() {
         String name = "";
         String enabledChars = "QAZWSXEDCRFVTGBYHNUJMIKOLPqazwsxedcrfvtgbyhnujmikolpЙФЯЦЫЧУВСКАМЕПИНРТГОЬШЛБЩДЮЗЖХЭЪЁйфяцычувскамепинртгоьшлбщдюзжхэъё0123456789 ";
         while (true) {
@@ -133,9 +155,26 @@ public class GUI{
         return name;
     }
 
-    //Метод выводит сообщение
-    public void showMessage(String msg, String title){
-        JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
+    //Метод устанавливает в ячейку фишку игрока
+    public void setPlayerChecker(Coord coord) {
+        board.setPlayerChecker(coord);
+    }
+
+    //Метод устанавливает в ячейку фишку противника
+    public void setOpponentChecker(Coord coord) {
+        board.setOpponentChecker(coord);
+    }
+
+    //Метод делает доступными для выбора игроком переданные ему в списке coords ячейки. Если список пуст или null - все ячейки становятся недоступными
+    public void setEnabledCells(List<Coord> coords) {
+        board.setEnabledCells(coords);
+    }
+
+    //Метод вызывается при щелче мышкой по разрешенной ячейке и передает координаты ячейки в объект класса Game
+    public void playerStroke(Coord coord){
+        if(game!=null){
+            if(game.isAlive())game.playerStroke(coord);
+        }
     }
 
 }

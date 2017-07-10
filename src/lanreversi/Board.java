@@ -1,9 +1,14 @@
 package lanreversi;
 
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import static lanreversi.JReversi.*;
 
+//В данный класс выделена группа операций, осуществляемых с клетками игрового поля
 public final class Board extends JPanel{
 
     //Количество клеток на игровом поле
@@ -24,8 +29,17 @@ public final class Board extends JPanel{
         c=new Cell[rows][cols];
         for(int i=0;i<rows;i++)
             for(int j=0;j<cols;j++){
-                c[i][j]=new Cell(i, j, Cell.EMPTY, 0);
+                c[i][j]=new Cell(new Coord(i, j), Cell.EMPTY, 0);
                 this.add(c[i][j]);
+                c[i][j].addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+                        if(e.getButton()!=1)return;
+                        Cell cell=(Cell)e.getSource();
+                        if(cell.isEnabledCell())gui.playerStroke(cell.getCoord());
+                    }
+
+                });
             }
         clear();
     }
@@ -36,6 +50,8 @@ public final class Board extends JPanel{
             for(int j=0;j<cols;j++){
                 c[i][j].setContent(Cell.EMPTY);
                 c[i][j].setStyle(currentStyle);
+                c[i][j].setEnabledCell(false);
+
             }
         c[rows/2-1][cols/2-1].setContent(playerColor);
         c[rows/2][cols/2].setContent(playerColor);
@@ -82,5 +98,34 @@ public final class Board extends JPanel{
         for(int i=0;i<rows;i++)
             for(int j=0;j<cols;j++)c[i][j].setStyle(currentStyle);
     }
+
+    //Метод устанавливает в ячейку фишку игрока
+    public void setPlayerChecker(Coord coord){
+        int x=coord.x;
+        int y=coord.y;
+        if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setContent(playerColor);
+    }
+
+    //Метод устанавливает в ячейку фишку противника
+    public void setOpponentChecker(Coord coord){
+        int x=coord.x;
+        int y=coord.y;
+        if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setContent(opponentColor);
+    }
+
+    //Метод делает доступными для выбора игроком переданные ему ячейки
+    public void setEnabledCells(List<Coord> coords){
+        //Сначала сбрасываем доступность ранее отмеченных как доступные клеток
+        for(int i=0;i<rows;i++)
+            for(int j=0;j<cols;j++){
+                c[i][j].setEnabledCell(false);
+            }
+        if(coords==null)return;
+        if(coords.isEmpty())return;
+        for(Coord c0: coords){
+            c[c0.y][c0.x].setEnabledCell(true);
+        }
+    }
+
 
 }
