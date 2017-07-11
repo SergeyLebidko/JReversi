@@ -64,11 +64,6 @@ public final class Board extends JPanel{
         return playerColor;
     }
 
-    //Метод возвращает текущий цвет фишек фишек противника
-    public int getOpponentColor(){
-        return opponentColor;
-    }
-
     //Метод изменяет цвет фишек игрока и противника
     public void revert(){
         int t;
@@ -113,7 +108,7 @@ public final class Board extends JPanel{
         if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setContent(opponentColor);
     }
 
-    //Метод делает доступными для выбора игроком переданные ему ячейки
+    //Метод делает доступными для выбора игроком переданные ему ячейки. Если coord пуст или равен null, все ячейки помечаются, как недоступные
     public void setEnabledCells(List<Coord> coords){
         //Сначала сбрасываем доступность ранее отмеченных как доступные клеток
         for(int i=0;i<rows;i++)

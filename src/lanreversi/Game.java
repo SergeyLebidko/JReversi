@@ -15,7 +15,7 @@ public class Game extends Thread {
                     System.out.println("Щелчок в ячейку в строке: " + playerStroke.y + ". В столбце: " + playerStroke.x);
                     playerStroke = null;
                 }
-                if (stop)break;
+                if (stop)return;
                 try {
                     wait(50);
                 } catch (InterruptedException ex) {}
