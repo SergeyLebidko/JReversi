@@ -21,7 +21,7 @@ public final class Board extends JPanel{
 
     private final Cell[][] c;  //Клетки игрового поля
 
-    public Board(int cols, int rows) {
+    public Board(int rows, int cols) {
         super(new GridLayout(rows, cols, 5, 5));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.cols=cols;
@@ -41,11 +41,11 @@ public final class Board extends JPanel{
 
                 });
             }
-        clear();
+        clearBoard();
     }
 
     //Метод сбрасывает игровое поле до начальной конфигурации
-    public void clear(){
+    public void clearBoard(){
         for(int i=0;i<rows;i++)
             for(int j=0;j<cols;j++){
                 c[i][j].setContent(Cell.EMPTY);
@@ -65,7 +65,7 @@ public final class Board extends JPanel{
     }
 
     //Метод изменяет цвет фишек игрока и противника
-    public void revert(){
+    public void revertColor(){
         int t;
         t=playerColor;
         playerColor=opponentColor;
@@ -121,6 +121,5 @@ public final class Board extends JPanel{
             c[c0.y][c0.x].setEnabledCell(true);
         }
     }
-
 
 }

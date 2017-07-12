@@ -21,7 +21,7 @@ public class GUI{
     private final Board board;    //Игровое поле
 
     //В конструтор передается колчисетво ячеек, которое будет на игровом поле
-    public GUI(int cols, int  rows) {
+    public GUI(int rows, int  cols) {
         //Размеры главного окна
         int W=800;        //Ширина главного окна
         int hTop=30;      //Высота верхней панели
@@ -60,7 +60,7 @@ public class GUI{
         frame.add(topPane, BorderLayout.NORTH);
 
         //Создаем игровое поле
-        board=new Board(cols, rows);
+        board=new Board(rows, cols);
         frame.add(board, BorderLayout.CENTER);
 
         //Создаем панель с кнопками
@@ -92,15 +92,15 @@ public class GUI{
 
                 //Игра еще не была запущена - создаем запускаем новую игру
                 if(game==null){
-                    game=new Game();
+                    game=new Game(rows, cols);
                     game.start();
                     return;
                 }
 
                 //Игра была ранее запущена (активность игры в данный момент роли не играет)
-                game.stopThread();
+                if(game.isAlive())game.interrupt();
                 while (game.isAlive()) {}
-                game=new Game();
+                game=new Game(rows, cols);
                 game.start();
 
             }
@@ -117,7 +117,7 @@ public class GUI{
         colorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                board.revert();
+                board.revertColor();
                 if(board.getPlayerColor()==Cell.BLACK)colorButton.setIcon(new ImageIcon("res\\keys_ico\\black_16.png"));
                 if(board.getPlayerColor()==Cell.WHITE)colorButton.setIcon(new ImageIcon("res\\keys_ico\\white_16.png"));
                 colorButton.setToolTipText("Ваш цвет "+(board.getPlayerColor()==Cell.BLACK?"черный":"белый"));
@@ -175,6 +175,11 @@ public class GUI{
         if(game!=null){
             if(game.isAlive())game.playerStroke(coord);
         }
+    }
+
+    //Метод сбрасывает игровое поле до начальной конфигурации
+    public void clearBoard() {
+        board.clearBoard();
     }
 
 }
