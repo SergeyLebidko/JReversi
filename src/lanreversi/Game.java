@@ -14,7 +14,7 @@ public class Game extends Thread {
 
     //Константы для представления содержимого ячеек игрового поля
     private static final int PLAYER = 1;
-    private static final int OPPENENT = -1;
+    private static final int OPPONENT = -1;
     private static final int EMPTY = 0;
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
@@ -31,9 +31,6 @@ public class Game extends Thread {
 
     @Override
     public void run() {
-
-        System.out.println("Игра запущена...");
-
         //Сбрасываем результаты прошлой игры
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -46,60 +43,223 @@ public class Game extends Thread {
         }
         m[rows / 2 - 1][cols / 2 - 1] = PLAYER;
         m[rows / 2][cols / 2] = PLAYER;
-        m[rows / 2][cols / 2 - 1] = OPPENENT;
-        m[rows / 2 - 1][cols / 2] = OPPENENT;
+        m[rows / 2][cols / 2 - 1] = OPPONENT;
+        m[rows / 2 - 1][cols / 2] = OPPONENT;
 
         //Объявляем внутренние вспомогательные переменные
         //Координаты очередного хода
         int xStroke;
         int yStroke;
 
+        //Признаки отсутствия доступных ходов. Если оба равны true, то игра окончена
+        boolean notPlayerAvailable = false;        //Если равна true, нет доступных ходов у игрока
+        boolean notOpponentAvailable = false;      //Если равна true, нет доступных ходов у компьютера
+
         //Основной цикл, реализующий игру
         while (true) {
-            //Первый этап - показать игроку доступные для его хода ячейки
-            l = getAvailableCellList(PLAYER);
-            try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        gui.setEnabledCells(l);
-                    }
-                });
-            } catch (InterruptedException | InvocationTargetException ex) {
-            }
+            //Первый этап ищем ячейки, в которые может походить игрок
+            l = getAvailableCellList(m, PLAYER);
+            notPlayerAvailable = l.isEmpty();
+            if (!notPlayerAvailable) {
 
-            //Фрагмент кода, получающий ход игрока
-            synchronized (this) {
-                playerStroke = null;
-                while (true) {
-                    if (playerStroke != null) {
-                        xStroke = playerStroke.x;
-                        yStroke = playerStroke.y;
-                        break;
-                    }
-                    try {
-                        wait(50);
-                    } catch (InterruptedException ex) {
+                //Помечаем цветом доступные игроку клетки
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            gui.setEnabledCells(l);
+                        }
+                    });
+                } catch (InterruptedException | InvocationTargetException ex) {
+                }
 
-                        System.out.println("Игра остановлена...");
-
-                        return;
+                //Получаем ход игрока
+                synchronized (this) {
+                    playerStroke = null;
+                    while (true) {
+                        if (playerStroke != null) {
+                            xStroke = playerStroke.x;
+                            yStroke = playerStroke.y;
+                            break;
+                        }
+                        try {
+                            wait(50);
+                        } catch (InterruptedException ex) {
+                            return;
+                        }
                     }
+                }
+
+                //Обрабатываем ход игрока
+                //Сперва делаем все ячейки поля недоступными
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            gui.setEnabledCells(null);
+                        }
+                    });
+                } catch (InterruptedException | InvocationTargetException ex) {
                 }
             }
 
-            System.out.println("Щелчок в ячейку в строке "+yStroke+" "+" столбце "+xStroke);
+            //Второй этап - ищем ячейки, в которые может походить компьютер
+            l = getAvailableCellList(m, OPPONENT);
+            notOpponentAvailable=l.isEmpty();
+            if(!notOpponentAvailable){
 
+                //Вставить код расчета хода компьютера...
+
+            }
+
+            //Третий этап - проверка завершения работы
+            if(notPlayerAvailable & notOpponentAvailable){
+
+                //Вставить код вывода сообщения о завершении игры
+
+            }
         }
 
     }
 
-    //Метод получает список ячеек доступных для установки фишки цвета n
-    private LinkedList<Coord> getAvailableCellList(int n) {
+    //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
+    private LinkedList<Coord> getRevertCells(int[][] m0, int n, int y, int x){
+        LinkedList<Coord> res=new LinkedList<>();
+        int r = m0.length;
+        int c = m0[0].length;
+
+        //Проверяем первый особый случай: ячейка выходит за пределы матрицы
+        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
+            return res;
+        }
+
+        //Проверяем второй особый случай: ячейка, в которую пытаемся поставить фишку не пуста
+        if (m0[y][x] != EMPTY) {
+            return res;
+        }
+
+        int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
+        int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
+        int result = 0;
+        int k;                 //Множитель
+        int x0;                //Промежуточные координаты
+        int y0;
+        LinkedList<Coord> s = new LinkedList<>();    //Промежуточный список координат
+
+        //Во внешнем цикле перебираем направления
+        for (int t = 0; t < 8; t++) {
+            k = 0;
+            s.clear();
+            while (true) {
+                k++;
+                x0 = x + k * dx[t];
+                y0 = y + k * dy[t];
+                if ((y0 < 0) | (y0 >= r) | (x0 < 0) | (x0 >= c)) {
+                    s.clear();
+                    break;
+                }
+                if (m0[y0][x0] == EMPTY) {
+                    s.clear();
+                    break;
+                }
+                if (m0[y0][x0] == n) {
+                    break;
+                }
+                s.add(new Coord(y0, x0));
+            }
+            if (!s.isEmpty()) res.addAll(s);
+        }
+
+        //Возвращаем результат
+        return res;
+    }
+
+    //Метод возвращает матрицу, в которую будет преобразована матрица m0, согласно ходу фишки цвета n в клетку y,x
+    private int[][] getNewMatr(int[][] m0, int n, int y, int x) {
+        //Сначала создаем копию исходной матрицы
+        int[][] res;
+        int r = m0.length;
+        int c = m0[0].length;
+        res = new int[r][c];
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                res[i][j] = m0[i][j];
+            }
+        }
+
+        //Проверяем первый особый случай: ячейка выходит за пределы матрицы
+        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
+            return res;
+        }
+
+        //Проверяем второй особый случай: ячейка, в которую пытаемся поставить фишку не пуста
+        if (m0[y][x] != EMPTY) {
+            return res;
+        }
+
+        int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
+        int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
+        int result = 0;
+        int k;                 //Множитель
+        int x0;                //Промежуточные координаты
+        int y0;
+        LinkedList<Coord> s = new LinkedList<>();    //Промежуточный список координат
+
+        //Во внешнем цикле перебираем направления
+        for (int t = 0; t < 8; t++) {
+            k = 0;
+            s.clear();
+            while (true) {
+                k++;
+                x0 = x + k * dx[t];
+                y0 = y + k * dy[t];
+                if ((y0 < 0) | (y0 >= r) | (x0 < 0) | (x0 >= c)) {
+                    s.clear();
+                    break;
+                }
+                if (m0[y0][x0] == EMPTY) {
+                    s.clear();
+                    break;
+                }
+                if (m0[y0][x0] == n) {
+                    break;
+                }
+                s.add(new Coord(y0, x0));
+            }
+            if (!s.isEmpty()) {
+                for (Coord coord : s) {
+                    res[coord.y][coord.x] = n;
+                }
+            }
+        }
+
+        //Возвращаем результат
+        return res;
+    }
+
+    //Метод подсчитывает количество очков, которые в матрице m0 набирает игрок с фишками n
+    private int getScore(int[][] m0, int n) {
+        int result = 0;
+        int r = m0.length;
+        int c = m0[0].length;
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if (m0[i][j] == n) {
+                    result++;
+                }
+            }
+        }
+        return result;
+    }
+
+    //Метод возвращает список ячеек в матрице m0 доступных для установки фишки цвета n
+    private LinkedList<Coord> getAvailableCellList(int[][] m0, int n) {
         LinkedList<Coord> l = new LinkedList<>();
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (isCellAvailable(n, i, j)) {
+        int r = m0.length;
+        int c = m0[0].length;
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if (isCellAvailable(m0, n, i, j)) {
                     l.add(new Coord(i, j));
                 }
             }
@@ -107,17 +267,19 @@ public class Game extends Thread {
         return l;
     }
 
-    //метод определяет доступность ячейки для установки фишки
-    private boolean isCellAvailable(int n, int y, int x) {
-        return (getCellRate(n, y, x) > 0);
+    //метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n (ячейка считается доступной, если имеет ненулевой рейтинг)
+    private boolean isCellAvailable(int[][] m0, int n, int y, int x) {
+        return (getCellRate(m0, n, y, x) > 0);
     }
 
-    //Метод подсчитывает рейтинг ячейки
-    private int getCellRate(int n, int y, int x) {
-        if ((y < 0) | (y >= rows) | (x < 0) | (x >= cols)) {
+    //Метод подсчитывает рейтинг ячейки y,x в матрице m0 для цвета n
+    private int getCellRate(int[][] m0, int n, int y, int x) {
+        int r = m0.length;
+        int c = m0[0].length;
+        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
             return 0;
         }
-        if (m[y][x] != EMPTY) {
+        if (m0[y][x] != EMPTY) {
             return 0;
         }
 
@@ -137,15 +299,15 @@ public class Game extends Thread {
                 k++;
                 x0 = x + k * dx[t];
                 y0 = y + k * dy[t];
-                if ((y0 < 0) | (y0 >= rows) | (x0 < 0) | (x0 >= cols)) {
+                if ((y0 < 0) | (y0 >= r) | (x0 < 0) | (x0 >= c)) {
                     s = 0;
                     break;
                 }
-                if (m[y0][x0] == EMPTY) {
+                if (m0[y0][x0] == EMPTY) {
                     s = 0;
                     break;
                 }
-                if (m[y0][x0] == n) {
+                if (m0[y0][x0] == n) {
                     break;
                 }
                 s++;
