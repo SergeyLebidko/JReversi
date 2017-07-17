@@ -6,9 +6,9 @@ import javax.swing.SwingUtilities;
 import static lanreversi.JReversi.*;
 
 //Данный класс реализует локальную игру
-public class Game extends Thread {
+public class LocalGame extends Thread {
 
-    private final int[][] m;              //Игровое поле
+    private int[][] m;                    //Игровое поле
     private final int rows;               //Количество строк на игровом поле
     private final int cols;               //Количество столбцов на игровом поле
 
@@ -19,11 +19,15 @@ public class Game extends Thread {
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
-    //Вспомогательный список координат
+    //Вспомогательные переменные для представления координат
+    private int xStroke;
+    private int yStroke;
+
+    //Вспомогательный список для представления наборов координат
     LinkedList<Coord> l = new LinkedList<>();
 
     //В конструктор передается rows - количество строк на игровом поле, cols - количество столбцов на игровом поле
-    public Game(int rows, int cols) {
+    public LocalGame(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
         m = new int[rows][cols];
@@ -48,8 +52,7 @@ public class Game extends Thread {
 
         //Объявляем внутренние вспомогательные переменные
         //Координаты очередного хода
-        int xStroke;
-        int yStroke;
+
 
         //Признаки отсутствия доступных ходов. Если оба равны true, то игра окончена
         boolean notPlayerAvailable = false;        //Если равна true, нет доступных ходов у игрока
@@ -91,16 +94,29 @@ public class Game extends Thread {
                 }
 
                 //Обрабатываем ход игрока
-                //Сперва делаем все ячейки поля недоступными
+                //Сперва делаем все ячейки поля недоступными и отображаем ход игрока
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
                             gui.setEnabledCells(null);
+                            gui.setPlayerChecker(new Coord(yStroke, xStroke));
                         }
                     });
                 } catch (InterruptedException | InvocationTargetException ex) {
                 }
+
+                //Теперь получаем список перевернувшихся фишек и отображаем его на экране
+                l=getRevertCells(m, PLAYER, yStroke, xStroke);
+                try {
+                    showChekersList(l, PLAYER);
+                } catch (InterruptedException ex) {
+                    return;
+                }
+
+                //Теперь фиксируем изменения после хода в игровой матрице
+                m=getNewMatr(m, PLAYER, yStroke, xStroke);
+
             }
 
             //Второй этап - ищем ячейки, в которые может походить компьютер
@@ -116,10 +132,29 @@ public class Game extends Thread {
             if(notPlayerAvailable & notOpponentAvailable){
 
                 //Вставить код вывода сообщения о завершении игры
+                System.out.println("Игра окончена...");
+                return;
 
             }
         }
 
+    }
+
+    //Метод необходим для отображения очередного хода на экране
+    private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException{
+        for(Coord coord: coordList){
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(n==PLAYER)gui.setPlayerChecker(coord);
+                        if(n==OPPONENT)gui.setOpponentChecker(coord);
+                    }
+                });
+            } catch (InterruptedException | InvocationTargetException ex) {
+            }
+            Thread.sleep(500);
+        }
     }
 
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
@@ -197,6 +232,12 @@ public class Game extends Thread {
             return res;
         }
 
+        //Проверяем третий особый случай: ячейка y,x - недоступна для хода
+        if(!isCellAvailable(res, n, y, x)) return res;
+
+        //Фиксируем ход
+        res[y][x]=n;
+
         int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
         int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
         int result = 0;
@@ -267,12 +308,12 @@ public class Game extends Thread {
         return l;
     }
 
-    //метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n (ячейка считается доступной, если имеет ненулевой рейтинг)
+    //Метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n (ячейка считается доступной, если имеет ненулевой рейтинг)
     private boolean isCellAvailable(int[][] m0, int n, int y, int x) {
         return (getCellRate(m0, n, y, x) > 0);
     }
 
-    //Метод подсчитывает рейтинг ячейки y,x в матрице m0 для цвета n
+    //Метод подсчитывает рейтинг ячейки y,x в матрице m0 для цвета n (рейтинг - количество фишек, которые перевернутся после этого хода)
     private int getCellRate(int[][] m0, int n, int y, int x) {
         int r = m0.length;
         int c = m0[0].length;

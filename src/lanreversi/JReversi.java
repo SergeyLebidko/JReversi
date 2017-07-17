@@ -6,7 +6,7 @@ import javax.swing.SwingUtilities;
 public class JReversi{
 
     public static GUI gui;                 //Используемый графический интерфейс
-    public static Game game;               //Поток, реализующий локальную игру
+    public static LocalGame localGame;               //Поток, реализующий локальную игру
     public static String playerName="";    //Имя игрока
 
     //Размеры игрового поля

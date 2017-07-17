@@ -15,40 +15,42 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import static lanreversi.JReversi.*;
 
-public class GUI{
+public class GUI {
 
     private final JFrame frame;   //Главное окно
     private final Board board;    //Игровое поле
 
+    //Текстовые компоненты табло
+    private JLabel l1 = new JLabel(" ");
+    private JLabel l2 = new JLabel(" ");
+    private JLabel l3 = new JLabel(" ");
+    private JLabel l4 = new JLabel(" ");
+
     //В конструтор передается колчисетво ячеек, которое будет на игровом поле
-    public GUI(int rows, int  cols) {
+    public GUI(int rows, int cols) {
         //Размеры главного окна
-        int W=800;        //Ширина главного окна
-        int hTop=30;      //Высота верхней панели
-        int hBoard=800;   //Высота игрового поля
-        int hBottom=30;   //Высота нижней панели
+        int W = 800;        //Ширина главного окна
+        int hTop = 30;      //Высота верхней панели
+        int hBoard = 800;   //Высота игрового поля
+        int hBottom = 30;   //Высота нижней панели
 
         //Создаем главное окно
-        frame=new JFrame("LANReversi");
+        frame = new JFrame("LANReversi");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(new ImageIcon("res\\logo.png").getImage());
-        frame.setSize(W, (hBoard+hTop+hBottom));
+        frame.setSize(W, (hBoard + hTop + hBottom));
         frame.setResizable(false);
-        int xPos=Toolkit.getDefaultToolkit().getScreenSize().width/2-W/2;
-        int yPos=Toolkit.getDefaultToolkit().getScreenSize().height/2-(hTop+hBoard+hBottom)/2;
+        int xPos = Toolkit.getDefaultToolkit().getScreenSize().width / 2 - W / 2;
+        int yPos = Toolkit.getDefaultToolkit().getScreenSize().height / 2 - (hTop + hBoard + hBottom) / 2;
         frame.setLocation(xPos, yPos);
 
         //Создаем верхнюю панель (панель очков и сообщений)
-        Box topPane=Box.createHorizontalBox();
+        Box topPane = Box.createHorizontalBox();
         topPane.setBorder(BorderFactory.createEmptyBorder(5, 8, 0, 8));
-        JLabel l1=new JLabel(" ");
         l1.setFont(new Font(null, Font.PLAIN, 16));
-        JLabel l2=new JLabel(" ");
         l2.setFont(new Font(null, Font.PLAIN, 16));
-        JLabel l3=new JLabel(" ");
         l3.setFont(new Font(null, Font.PLAIN, 16));
-        JLabel l4=new JLabel(" ");
         l4.setFont(new Font(null, Font.PLAIN, 16));
         topPane.add(l1);
         topPane.add(Box.createHorizontalStrut(10));
@@ -60,20 +62,20 @@ public class GUI{
         frame.add(topPane, BorderLayout.NORTH);
 
         //Создаем игровое поле
-        board=new Board(rows, cols);
+        board = new Board(rows, cols);
         frame.add(board, BorderLayout.CENTER);
 
         //Создаем панель с кнопками
-        Box bottomPane=Box.createHorizontalBox();
+        Box bottomPane = Box.createHorizontalBox();
         bottomPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 5, 8));
 
-        final JButton startButton=new JButton(new ImageIcon("res\\keys_ico\\startgame_16.png"));
-        final JButton styleButton=new JButton(new ImageIcon("res\\keys_ico\\style_16.png"));
-        final JButton colorButton=new JButton(new ImageIcon("res\\keys_ico\\black_16.png"));
+        final JButton startButton = new JButton(new ImageIcon("res\\keys_ico\\startgame_16.png"));
+        final JButton styleButton = new JButton(new ImageIcon("res\\keys_ico\\style_16.png"));
+        final JButton colorButton = new JButton(new ImageIcon("res\\keys_ico\\black_16.png"));
 
         startButton.setToolTipText("Начать новую игру");
         styleButton.setToolTipText(board.getCurrentStyleName());
-        colorButton.setToolTipText("Ваш цвет "+(board.getPlayerColor()==Cell.BLACK?"черный":"белый"));
+        colorButton.setToolTipText("Ваш цвет " + (board.getPlayerColor() == Cell.BLACK ? "черный" : "белый"));
 
         bottomPane.add(startButton);
         bottomPane.add(Box.createHorizontalGlue());
@@ -91,17 +93,20 @@ public class GUI{
             public void actionPerformed(ActionEvent e) {
 
                 //Игра еще не была запущена - создаем запускаем новую игру
-                if(game==null){
-                    game=new Game(rows, cols);
-                    game.start();
+                if (localGame == null) {
+                    localGame = new LocalGame(rows, cols);
+                    localGame.start();
                     return;
                 }
 
                 //Игра была ранее запущена (активность игры в данный момент роли не играет)
-                if(game.isAlive())game.interrupt();
-                while (game.isAlive()) {}
-                game=new Game(rows, cols);
-                game.start();
+                if (localGame.isAlive()) {
+                    localGame.interrupt();
+                }
+                while (localGame.isAlive()) {
+                }
+                localGame = new LocalGame(rows, cols);
+                localGame.start();
 
             }
         });
@@ -118,9 +123,13 @@ public class GUI{
             @Override
             public void actionPerformed(ActionEvent e) {
                 board.revertColor();
-                if(board.getPlayerColor()==Cell.BLACK)colorButton.setIcon(new ImageIcon("res\\keys_ico\\black_16.png"));
-                if(board.getPlayerColor()==Cell.WHITE)colorButton.setIcon(new ImageIcon("res\\keys_ico\\white_16.png"));
-                colorButton.setToolTipText("Ваш цвет "+(board.getPlayerColor()==Cell.BLACK?"черный":"белый"));
+                if (board.getPlayerColor() == Cell.BLACK) {
+                    colorButton.setIcon(new ImageIcon("res\\keys_ico\\black_16.png"));
+                }
+                if (board.getPlayerColor() == Cell.WHITE) {
+                    colorButton.setIcon(new ImageIcon("res\\keys_ico\\white_16.png"));
+                }
+                colorButton.setToolTipText("Ваш цвет " + (board.getPlayerColor() == Cell.BLACK ? "черный" : "белый"));
             }
         });
 
@@ -170,16 +179,35 @@ public class GUI{
         board.setEnabledCells(coords);
     }
 
-    //Метод вызывается при щелче мышкой по разрешенной ячейке и передает координаты ячейки в объект класса Game
-    public void playerStroke(Coord coord){
-        if(game!=null){
-            if(game.isAlive())game.playerStroke(coord);
+    //Метод вызывается при щелче мышкой по разрешенной ячейке и передает координаты ячейки в объект класса LocalGame
+    public void playerStroke(Coord coord) {
+        if (localGame != null) {
+            if (localGame.isAlive()) {
+                localGame.playerStroke(coord);
+            }
         }
     }
 
     //Метод сбрасывает игровое поле до начальной конфигурации
     public void clearBoard() {
         board.clearBoard();
+    }
+
+    //Методы вывода информации на табло
+    public void setText1(String txt) {
+        l1.setText(txt);
+    }
+
+    public void setText2(String txt) {
+        l2.setText(txt);
+    }
+
+    public void setText3(String txt) {
+        l3.setText(txt);
+    }
+
+    public void setText4(String txt) {
+        l4.setText(txt);
     }
 
 }
