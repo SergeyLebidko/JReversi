@@ -35,7 +35,7 @@ public class GUI {
         int hBottom = 30;   //Высота нижней панели
 
         //Создаем главное окно
-        frame = new JFrame("LANReversi");
+        frame = new JFrame("JReversi");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(new ImageIcon("res\\logo.png").getImage());
@@ -208,6 +208,11 @@ public class GUI {
 
     public void setText4(String txt) {
         l4.setText(txt);
+    }
+
+    //Метод выводит ссобщение в модальном окне
+    public void showMsg(String msg){
+        JOptionPane.showMessageDialog(frame, msg, "", JOptionPane.INFORMATION_MESSAGE);
     }
 
 }

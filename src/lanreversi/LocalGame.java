@@ -2,6 +2,8 @@ package lanreversi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import static lanreversi.JReversi.*;
 
@@ -41,6 +43,10 @@ public class LocalGame extends Thread {
                 @Override
                 public void run() {
                     gui.clearBoard();
+                    gui.setText1(playerName);
+                    gui.setText2("2");
+                    gui.setText3("2");
+                    gui.setText4("Компьютер");
                 }
             });
         } catch (InterruptedException | InvocationTargetException ex) {
@@ -51,9 +57,6 @@ public class LocalGame extends Thread {
         m[rows / 2 - 1][cols / 2] = OPPONENT;
 
         //Объявляем внутренние вспомогательные переменные
-        //Координаты очередного хода
-
-
         //Признаки отсутствия доступных ходов. Если оба равны true, то игра окончена
         boolean notPlayerAvailable = false;        //Если равна true, нет доступных ходов у игрока
         boolean notOpponentAvailable = false;      //Если равна true, нет доступных ходов у компьютера
@@ -64,7 +67,6 @@ public class LocalGame extends Thread {
             l = getAvailableCellList(m, PLAYER);
             notPlayerAvailable = l.isEmpty();
             if (!notPlayerAvailable) {
-
                 //Помечаем цветом доступные игроку клетки
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
@@ -73,9 +75,10 @@ public class LocalGame extends Thread {
                             gui.setEnabledCells(l);
                         }
                     });
-                } catch (InterruptedException | InvocationTargetException ex) {
+                } catch (InvocationTargetException ex){
+                } catch (InterruptedException ex) {
+                    return;
                 }
-
                 //Получаем ход игрока
                 synchronized (this) {
                     playerStroke = null;
@@ -92,9 +95,8 @@ public class LocalGame extends Thread {
                         }
                     }
                 }
-
                 //Обрабатываем ход игрока
-                //Сперва делаем все ячейки поля недоступными и отображаем ход игрока
+                //Отключаем доступность ячеек и отображаем ход игрока
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -103,63 +105,92 @@ public class LocalGame extends Thread {
                             gui.setPlayerChecker(new Coord(yStroke, xStroke));
                         }
                     });
-                } catch (InterruptedException | InvocationTargetException ex) {
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
                 }
-
-                //Теперь получаем список перевернувшихся фишек и отображаем его на экране
+                //Получаем список ячеек, которые перевернутся в результате хода игрока
                 l=getRevertCells(m, PLAYER, yStroke, xStroke);
+                //Отражаем изменения на игровом поле после хода игрока
+                m=getNewMatr(m, PLAYER, yStroke, xStroke);
+                //Отображаем количество набранных игроком и компьютером очков на табло
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            gui.setText2(""+getScore(m, PLAYER));
+                            gui.setText3(""+getScore(m, OPPONENT));
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
+                }
+                //Переворачиваем фишки на экране
                 try {
                     showChekersList(l, PLAYER);
                 } catch (InterruptedException ex) {
                     return;
                 }
-
-                //Теперь фиксируем изменения после хода в игровой матрице
-                m=getNewMatr(m, PLAYER, yStroke, xStroke);
-
             }
 
-            //Второй этап - ищем ячейки, в которые может походить компьютер
+            //Второй этап - поиск хода компьютера
             l = getAvailableCellList(m, OPPONENT);
-            notOpponentAvailable=l.isEmpty();
-            if(!notOpponentAvailable){
-
+            notOpponentAvailable = l.isEmpty();
+            if (!notOpponentAvailable) {
                 //Вставить код расчета хода компьютера...
-
             }
 
             //Третий этап - проверка завершения работы
-            if(notPlayerAvailable & notOpponentAvailable){
-
-                //Вставить код вывода сообщения о завершении игры
-                System.out.println("Игра окончена...");
+            if (notPlayerAvailable & notOpponentAvailable) {
+                final int playerScore=getScore(m, PLAYER);
+                final int opponentScore=getScore(m, OPPONENT);
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(playerScore>opponentScore)gui.showMsg("Вы победили!");
+                            if(playerScore<opponentScore)gui.showMsg("Вы проиграли...");
+                            if(playerScore==opponentScore)gui.showMsg("Ничья! Победила дружба!");
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
+                }
                 return;
-
             }
+
         }
 
     }
 
     //Метод необходим для отображения очередного хода на экране
-    private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException{
-        for(Coord coord: coordList){
+    private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException {
+        for (Coord coord : coordList) {
             try {
                 SwingUtilities.invokeAndWait(new Runnable() {
                     @Override
                     public void run() {
-                        if(n==PLAYER)gui.setPlayerChecker(coord);
-                        if(n==OPPONENT)gui.setOpponentChecker(coord);
+                        if (n == PLAYER) {
+                            gui.setPlayerChecker(coord);
+                        }
+                        if (n == OPPONENT) {
+                            gui.setOpponentChecker(coord);
+                        }
                     }
                 });
-            } catch (InterruptedException | InvocationTargetException ex) {
+            } catch (InterruptedException ex) {
+                throw ex;
+            } catch (InvocationTargetException ex) {
             }
             Thread.sleep(500);
         }
     }
 
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
-    private LinkedList<Coord> getRevertCells(int[][] m0, int n, int y, int x){
-        LinkedList<Coord> res=new LinkedList<>();
+    private LinkedList<Coord> getRevertCells(int[][] m0, int n, int y, int x) {
+        LinkedList<Coord> res = new LinkedList<>();
         int r = m0.length;
         int c = m0[0].length;
 
@@ -172,71 +203,6 @@ public class LocalGame extends Thread {
         if (m0[y][x] != EMPTY) {
             return res;
         }
-
-        int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
-        int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
-        int result = 0;
-        int k;                 //Множитель
-        int x0;                //Промежуточные координаты
-        int y0;
-        LinkedList<Coord> s = new LinkedList<>();    //Промежуточный список координат
-
-        //Во внешнем цикле перебираем направления
-        for (int t = 0; t < 8; t++) {
-            k = 0;
-            s.clear();
-            while (true) {
-                k++;
-                x0 = x + k * dx[t];
-                y0 = y + k * dy[t];
-                if ((y0 < 0) | (y0 >= r) | (x0 < 0) | (x0 >= c)) {
-                    s.clear();
-                    break;
-                }
-                if (m0[y0][x0] == EMPTY) {
-                    s.clear();
-                    break;
-                }
-                if (m0[y0][x0] == n) {
-                    break;
-                }
-                s.add(new Coord(y0, x0));
-            }
-            if (!s.isEmpty()) res.addAll(s);
-        }
-
-        //Возвращаем результат
-        return res;
-    }
-
-    //Метод возвращает матрицу, в которую будет преобразована матрица m0, согласно ходу фишки цвета n в клетку y,x
-    private int[][] getNewMatr(int[][] m0, int n, int y, int x) {
-        //Сначала создаем копию исходной матрицы
-        int[][] res;
-        int r = m0.length;
-        int c = m0[0].length;
-        res = new int[r][c];
-        for (int i = 0; i < r; i++) {
-            for (int j = 0; j < c; j++) {
-                res[i][j] = m0[i][j];
-            }
-        }
-
-        //Проверяем первый особый случай: ячейка выходит за пределы матрицы
-        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
-            return res;
-        }
-
-        //Проверяем второй особый случай: ячейка, в которую пытаемся поставить фишку не пуста
-        if (m0[y][x] != EMPTY) {
-            return res;
-        }
-
-        //Проверяем третий особый случай: ячейка y,x - недоступна для хода
-        if(!isCellAvailable(res, n, y, x)) return res;
-
-        //Фиксируем ход
-        res[y][x]=n;
 
         int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
         int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
@@ -268,11 +234,47 @@ public class LocalGame extends Thread {
                 s.add(new Coord(y0, x0));
             }
             if (!s.isEmpty()) {
-                for (Coord coord : s) {
-                    res[coord.y][coord.x] = n;
-                }
+                res.addAll(s);
             }
         }
+
+        //Возвращаем результат
+        return res;
+    }
+
+    //Метод возвращает матрицу, в которую будет преобразована матрица m0, согласно ходу фишки цвета n в клетку y,x
+    private int[][] getNewMatr(int[][] m0, int n, int y, int x) {
+        //Сначала создаем копию исходной матрицы
+        int[][] res;
+        int r = m0.length;
+        int c = m0[0].length;
+        res = new int[r][c];
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                res[i][j] = m0[i][j];
+            }
+        }
+
+        //Проверяем первый особый случай: ячейка выходит за пределы матрицы
+        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
+            return res;
+        }
+
+        //Проверяем второй особый случай: ячейка, в которую пытаемся поставить фишку не пуста
+        if (m0[y][x] != EMPTY) {
+            return res;
+        }
+
+        //Проверяем третий особый случай: ячейка y,x - недоступна для хода
+        if (!isCellAvailable(res, n, y, x)) {
+            return res;
+        }
+
+        LinkedList<Coord> revertList=getRevertCells(res, n, y, x);
+        for(Coord coord: revertList)res[coord.y][coord.x]=n;
+
+        //Фиксируем ход
+        res[y][x] = n;
 
         //Возвращаем результат
         return res;
