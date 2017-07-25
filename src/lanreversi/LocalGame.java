@@ -2,8 +2,6 @@ package lanreversi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import static lanreversi.JReversi.*;
 
@@ -19,6 +17,9 @@ public class LocalGame extends Thread {
     private static final int OPPONENT = -1;
     private static final int EMPTY = 0;
 
+    //Максимальная глубина перебора, используемая при поиске очередного хода
+    private static final int MAX_DEPTH = 4;
+
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
     //Вспомогательные переменные для представления координат
@@ -26,7 +27,10 @@ public class LocalGame extends Thread {
     private int yStroke;
 
     //Вспомогательный список для представления наборов координат
-    LinkedList<Coord> l = new LinkedList<>();
+    private LinkedList<Coord> l = new LinkedList<>();
+
+    //Вспомогательная переменная для представления координат отдельной ячейки
+    private Coord coordMaxRate;
 
     //В конструктор передается rows - количество строк на игровом поле, cols - количество столбцов на игровом поле
     public LocalGame(int rows, int cols) {
@@ -75,7 +79,7 @@ public class LocalGame extends Thread {
                             gui.setEnabledCells(l);
                         }
                     });
-                } catch (InvocationTargetException ex){
+                } catch (InvocationTargetException ex) {
                 } catch (InterruptedException ex) {
                     return;
                 }
@@ -110,16 +114,16 @@ public class LocalGame extends Thread {
                 } catch (InvocationTargetException ex) {
                 }
                 //Получаем список ячеек, которые перевернутся в результате хода игрока
-                l=getRevertCells(m, PLAYER, yStroke, xStroke);
+                l = getRevertCells(m, PLAYER, yStroke, xStroke);
                 //Отражаем изменения на игровом поле после хода игрока
-                m=getNewMatr(m, PLAYER, yStroke, xStroke);
+                m = getNewMatr(m, PLAYER, yStroke, xStroke);
                 //Отображаем количество набранных игроком и компьютером очков на табло
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
-                            gui.setText2(""+getScore(m, PLAYER));
-                            gui.setText3(""+getScore(m, OPPONENT));
+                            gui.setText2("" + getScore(m, PLAYER));
+                            gui.setText3("" + getScore(m, OPPONENT));
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -138,20 +142,73 @@ public class LocalGame extends Thread {
             l = getAvailableCellList(m, OPPONENT);
             notOpponentAvailable = l.isEmpty();
             if (!notOpponentAvailable) {
-                //Вставить код расчета хода компьютера...
-            }
+                //Ищем ход с максимальным рейтингом
+                int maxRate = Integer.MIN_VALUE;
+                int rate;
+                coordMaxRate = null;
+                for (Coord coord : l) {
+                    rate = getRate(getNewMatr(m, OPPONENT, coord.y, coord.x), PLAYER, MAX_DEPTH);
+                    if (rate > maxRate) {
+                        maxRate = rate;
+                        coordMaxRate = coord;
+                    }
+                }
 
-            //Третий этап - проверка завершения работы
-            if (notPlayerAvailable & notOpponentAvailable) {
-                final int playerScore=getScore(m, PLAYER);
-                final int opponentScore=getScore(m, OPPONENT);
+                //Обрабатываем ход компьютера
+                //Отображаем ход компьютера
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
-                            if(playerScore>opponentScore)gui.showMsg("Вы победили!");
-                            if(playerScore<opponentScore)gui.showMsg("Вы проиграли...");
-                            if(playerScore==opponentScore)gui.showMsg("Ничья! Победила дружба!");
+                            gui.setOpponentChecker(coordMaxRate);
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
+                }
+                //Получаем список ячеек, которые перевернутся в результате хода компьютера
+                l = getRevertCells(m, OPPONENT, coordMaxRate.y, coordMaxRate.x);
+                //Отражаем изменения на игровом поле после хода игрока
+                m = getNewMatr(m, OPPONENT, coordMaxRate.y, coordMaxRate.x);
+                //Отображаем количество набранных игроком и компьютером очков на табло
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            gui.setText2("" + getScore(m, PLAYER));
+                            gui.setText3("" + getScore(m, OPPONENT));
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
+                }
+                //Переворачиваем фишки на экране
+                try {
+                    showChekersList(l, OPPONENT);
+                } catch (InterruptedException ex) {
+                    return;
+                }
+            }
+
+            //Третий этап - проверка завершения работы
+            if (notPlayerAvailable & notOpponentAvailable) {
+                final int playerScore = getScore(m, PLAYER);
+                final int opponentScore = getScore(m, OPPONENT);
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (playerScore > opponentScore) {
+                                gui.showMsg("Вы победили!");
+                            }
+                            if (playerScore < opponentScore) {
+                                gui.showMsg("Вы проиграли...");
+                            }
+                            if (playerScore == opponentScore) {
+                                gui.showMsg("Ничья! Победила дружба!");
+                            }
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -165,6 +222,7 @@ public class LocalGame extends Thread {
 
     }
 
+    //Методы взаимодействия с пользователем
     //Метод необходим для отображения очередного хода на экране
     private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException {
         for (Coord coord : coordList) {
@@ -184,10 +242,23 @@ public class LocalGame extends Thread {
                 throw ex;
             } catch (InvocationTargetException ex) {
             }
-            Thread.sleep(500);
+            Thread.sleep(150);
         }
     }
 
+    //Метод принимает координаты выбранной пользователем ячейки
+    public void playerStroke(Coord coord) {
+        synchronized (this) {
+            playerStroke = coord;
+        }
+    }
+
+    //Метод возвращает рейтинг позиции в матрице m. Параметры: n - тот, кто будет ходить следующим; depth - "глубина" перебора
+    private int getRate(int[][] m, int n, int depth) {
+        return 0;
+    }
+
+    //Вспомогательные методы
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
     private LinkedList<Coord> getRevertCells(int[][] m0, int n, int y, int x) {
         LinkedList<Coord> res = new LinkedList<>();
@@ -270,8 +341,10 @@ public class LocalGame extends Thread {
             return res;
         }
 
-        LinkedList<Coord> revertList=getRevertCells(res, n, y, x);
-        for(Coord coord: revertList)res[coord.y][coord.x]=n;
+        LinkedList<Coord> revertList = getRevertCells(res, n, y, x);
+        for (Coord coord : revertList) {
+            res[coord.y][coord.x] = n;
+        }
 
         //Фиксируем ход
         res[y][x] = n;
@@ -312,23 +385,17 @@ public class LocalGame extends Thread {
 
     //Метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n (ячейка считается доступной, если имеет ненулевой рейтинг)
     private boolean isCellAvailable(int[][] m0, int n, int y, int x) {
-        return (getCellRate(m0, n, y, x) > 0);
-    }
-
-    //Метод подсчитывает рейтинг ячейки y,x в матрице m0 для цвета n (рейтинг - количество фишек, которые перевернутся после этого хода)
-    private int getCellRate(int[][] m0, int n, int y, int x) {
         int r = m0.length;
         int c = m0[0].length;
         if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
-            return 0;
+            return false;
         }
         if (m0[y][x] != EMPTY) {
-            return 0;
+            return false;
         }
 
         int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
         int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
-        int result = 0;
         int k;                 //Множитель
         int x0;                //Промежуточные координаты
         int y0;
@@ -355,16 +422,28 @@ public class LocalGame extends Thread {
                 }
                 s++;
             }
-            result += s;
+            if (s > 0) {
+                return true;
+            }
         }
-        return result;
+        return false;
     }
 
-    //Метод принимает координаты выбранной пользователем ячейки
-    public void playerStroke(Coord coord) {
-        synchronized (this) {
-            playerStroke = coord;
+    //Методы тестирования
+    //Метод выводит в консоль содержимое матрицы m
+    private void showMatr(int[][] m) {
+        for (int i = 0; i < m.length; i++) {
+            System.out.print("|");
+            for (int j = 0; j < m[i].length; j++) {
+                if (m[i][j] == (-1)) {
+                    System.out.print(" " + m[i][j] + " ");
+                } else {
+                    System.out.print("  " + m[i][j] + " ");
+                }
+            }
+            System.out.println("|");
         }
+        System.out.println();
     }
 
 }
