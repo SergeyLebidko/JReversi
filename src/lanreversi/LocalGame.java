@@ -8,13 +8,12 @@ import static lanreversi.JReversi.*;
 //Данный класс реализует локальную игру
 public class LocalGame extends Thread {
 
-    private int[][] m;                    //Игровое поле
-    private final int rows;               //Количество строк на игровом поле
-    private final int cols;               //Количество столбцов на игровом поле
+    //Игровое поле
+    private int[][] m;
 
     //Константы для представления содержимого ячеек игрового поля
     private static final int PLAYER = 1;
-    private static final int OPPONENT = -1;
+    private static final int COMPUTER = -1;
     private static final int EMPTY = 0;
 
     //Максимальная глубина перебора, используемая при поиске очередного хода
@@ -34,8 +33,6 @@ public class LocalGame extends Thread {
 
     //В конструктор передается rows - количество строк на игровом поле, cols - количество столбцов на игровом поле
     public LocalGame(int rows, int cols) {
-        this.rows = rows;
-        this.cols = cols;
         m = new int[rows][cols];
     }
 
@@ -55,22 +52,24 @@ public class LocalGame extends Thread {
             });
         } catch (InterruptedException | InvocationTargetException ex) {
         }
+        int rows=m.length;
+        int cols=m[0].length;
         m[rows / 2 - 1][cols / 2 - 1] = PLAYER;
         m[rows / 2][cols / 2] = PLAYER;
-        m[rows / 2][cols / 2 - 1] = OPPONENT;
-        m[rows / 2 - 1][cols / 2] = OPPONENT;
+        m[rows / 2][cols / 2 - 1] = COMPUTER;
+        m[rows / 2 - 1][cols / 2] = COMPUTER;
 
         //Объявляем внутренние вспомогательные переменные
         //Признаки отсутствия доступных ходов. Если оба равны true, то игра окончена
-        boolean notPlayerAvailable = false;        //Если равна true, нет доступных ходов у игрока
-        boolean notOpponentAvailable = false;      //Если равна true, нет доступных ходов у компьютера
+        boolean isPlayerCellListEmpty = false;        //Если равна true, нет доступных ходов у игрока
+        boolean isComputerCellListEmpty = false;      //Если равна true, нет доступных ходов у компьютера
 
         //Основной цикл, реализующий игру
         while (true) {
             //Первый этап ищем ячейки, в которые может походить игрок
             l = getAvailableCellList(m, PLAYER);
-            notPlayerAvailable = l.isEmpty();
-            if (!notPlayerAvailable) {
+            isPlayerCellListEmpty = l.isEmpty();
+            if (!isPlayerCellListEmpty) {
                 //Помечаем цветом доступные игроку клетки
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
@@ -114,16 +113,16 @@ public class LocalGame extends Thread {
                 } catch (InvocationTargetException ex) {
                 }
                 //Получаем список ячеек, которые перевернутся в результате хода игрока
-                l = getRevertCells(m, PLAYER, yStroke, xStroke);
-                //Отражаем изменения на игровом поле после хода игрока
-                m = getNewMatr(m, PLAYER, yStroke, xStroke);
+                l = getRevertCellsList(m, PLAYER, yStroke, xStroke);
+                //Фиксируем изменения на игровом поле после хода игрока
+                m = getNextMatr(m, PLAYER, yStroke, xStroke);
                 //Отображаем количество набранных игроком и компьютером очков на табло
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
                             gui.setText2("" + getScore(m, PLAYER));
-                            gui.setText3("" + getScore(m, OPPONENT));
+                            gui.setText3("" + getScore(m, COMPUTER));
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -139,15 +138,15 @@ public class LocalGame extends Thread {
             }
 
             //Второй этап - поиск хода компьютера
-            l = getAvailableCellList(m, OPPONENT);
-            notOpponentAvailable = l.isEmpty();
-            if (!notOpponentAvailable) {
+            l = getAvailableCellList(m, COMPUTER);
+            isComputerCellListEmpty = l.isEmpty();
+            if (!isComputerCellListEmpty) {
                 //Ищем ход с максимальным рейтингом
                 int maxRate = Integer.MIN_VALUE;
                 int rate;
                 coordMaxRate = null;
                 for (Coord coord : l) {
-                    rate = getRate(getNewMatr(m, OPPONENT, coord.y, coord.x), PLAYER, MAX_DEPTH);
+                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), PLAYER, MAX_DEPTH);
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
@@ -168,16 +167,16 @@ public class LocalGame extends Thread {
                 } catch (InvocationTargetException ex) {
                 }
                 //Получаем список ячеек, которые перевернутся в результате хода компьютера
-                l = getRevertCells(m, OPPONENT, coordMaxRate.y, coordMaxRate.x);
+                l = getRevertCellsList(m, COMPUTER, coordMaxRate.y, coordMaxRate.x);
                 //Отражаем изменения на игровом поле после хода игрока
-                m = getNewMatr(m, OPPONENT, coordMaxRate.y, coordMaxRate.x);
+                m = getNextMatr(m, COMPUTER, coordMaxRate.y, coordMaxRate.x);
                 //Отображаем количество набранных игроком и компьютером очков на табло
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
                             gui.setText2("" + getScore(m, PLAYER));
-                            gui.setText3("" + getScore(m, OPPONENT));
+                            gui.setText3("" + getScore(m, COMPUTER));
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -186,16 +185,16 @@ public class LocalGame extends Thread {
                 }
                 //Переворачиваем фишки на экране
                 try {
-                    showChekersList(l, OPPONENT);
+                    showChekersList(l, COMPUTER);
                 } catch (InterruptedException ex) {
                     return;
                 }
             }
 
             //Третий этап - проверка завершения работы
-            if (notPlayerAvailable & notOpponentAvailable) {
+            if (isPlayerCellListEmpty & isComputerCellListEmpty) {
                 final int playerScore = getScore(m, PLAYER);
-                final int opponentScore = getScore(m, OPPONENT);
+                final int opponentScore = getScore(m, COMPUTER);
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -223,7 +222,8 @@ public class LocalGame extends Thread {
     }
 
     //Методы взаимодействия с пользователем
-    //Метод необходим для отображения очередного хода на экране
+
+    //Метод необходим для переворачивания фишек на экране после очередного хода игрока или компьютера
     private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException {
         for (Coord coord : coordList) {
             try {
@@ -233,7 +233,7 @@ public class LocalGame extends Thread {
                         if (n == PLAYER) {
                             gui.setPlayerChecker(coord);
                         }
-                        if (n == OPPONENT) {
+                        if (n == COMPUTER) {
                             gui.setOpponentChecker(coord);
                         }
                     }
@@ -253,20 +253,25 @@ public class LocalGame extends Thread {
         }
     }
 
-    //Метод возвращает рейтинг позиции в матрице m. Параметры: n - тот, кто будет ходить следующим; depth - "глубина" перебора
+    //Вспомогательные методы
+
+    //Метод, реализующий рекурсивный поиск оценки очередного хода
+    //На входе:
+    //m - позиция на игровом поле, которую требуется оценить
+    //n - цвет фишек, которые будут делать следующий ход
+    //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
     private int getRate(int[][] m, int n, int depth) {
         return 0;
     }
 
-    //Вспомогательные методы
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
-    private LinkedList<Coord> getRevertCells(int[][] m0, int n, int y, int x) {
+    private LinkedList<Coord> getRevertCellsList(int[][] m0, int n, int y, int x) {
         LinkedList<Coord> res = new LinkedList<>();
-        int r = m0.length;
-        int c = m0[0].length;
+        int rows = m0.length;
+        int cols = m0[0].length;
 
         //Проверяем первый особый случай: ячейка выходит за пределы матрицы
-        if ((y < 0) | (y >= r) | (x < 0) | (x >= c)) {
+        if ((y < 0) | (y >= rows) | (x < 0) | (x >= cols)) {
             return res;
         }
 
@@ -291,7 +296,7 @@ public class LocalGame extends Thread {
                 k++;
                 x0 = x + k * dx[t];
                 y0 = y + k * dy[t];
-                if ((y0 < 0) | (y0 >= r) | (x0 < 0) | (x0 >= c)) {
+                if ((y0 < 0) | (y0 >= rows) | (x0 < 0) | (x0 >= cols)) {
                     s.clear();
                     break;
                 }
@@ -314,7 +319,7 @@ public class LocalGame extends Thread {
     }
 
     //Метод возвращает матрицу, в которую будет преобразована матрица m0, согласно ходу фишки цвета n в клетку y,x
-    private int[][] getNewMatr(int[][] m0, int n, int y, int x) {
+    private int[][] getNextMatr(int[][] m0, int n, int y, int x) {
         //Сначала создаем копию исходной матрицы
         int[][] res;
         int r = m0.length;
@@ -341,7 +346,7 @@ public class LocalGame extends Thread {
             return res;
         }
 
-        LinkedList<Coord> revertList = getRevertCells(res, n, y, x);
+        LinkedList<Coord> revertList = getRevertCellsList(res, n, y, x);
         for (Coord coord : revertList) {
             res[coord.y][coord.x] = n;
         }
@@ -383,7 +388,7 @@ public class LocalGame extends Thread {
         return l;
     }
 
-    //Метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n (ячейка считается доступной, если имеет ненулевой рейтинг)
+    //Метод определяет доступность ячейки y,x в матрице m0 для установки фишки цвета n
     private boolean isCellAvailable(int[][] m0, int n, int y, int x) {
         int r = m0.length;
         int c = m0[0].length;
@@ -427,23 +432,6 @@ public class LocalGame extends Thread {
             }
         }
         return false;
-    }
-
-    //Методы тестирования
-    //Метод выводит в консоль содержимое матрицы m
-    private void showMatr(int[][] m) {
-        for (int i = 0; i < m.length; i++) {
-            System.out.print("|");
-            for (int j = 0; j < m[i].length; j++) {
-                if (m[i][j] == (-1)) {
-                    System.out.print(" " + m[i][j] + " ");
-                } else {
-                    System.out.print("  " + m[i][j] + " ");
-                }
-            }
-            System.out.println("|");
-        }
-        System.out.println();
     }
 
 }
