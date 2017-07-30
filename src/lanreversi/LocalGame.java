@@ -17,7 +17,7 @@ public class LocalGame extends Thread {
     private static final int EMPTY = 0;
 
     //Максимальная глубина перебора, используемая при поиске очередного хода
-    private static final int MAX_DEPTH = 4;
+    private static final int MAX_DEPTH = 5;
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
@@ -52,8 +52,8 @@ public class LocalGame extends Thread {
             });
         } catch (InterruptedException | InvocationTargetException ex) {
         }
-        int rows=m.length;
-        int cols=m[0].length;
+        int rows = m.length;
+        int cols = m[0].length;
         m[rows / 2 - 1][cols / 2 - 1] = PLAYER;
         m[rows / 2][cols / 2] = PLAYER;
         m[rows / 2][cols / 2 - 1] = COMPUTER;
@@ -146,12 +146,14 @@ public class LocalGame extends Thread {
                 int rate;
                 coordMaxRate = null;
                 for (Coord coord : l) {
-                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), PLAYER, MAX_DEPTH);
+                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, MAX_DEPTH);
+                    System.out.println(rate);
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
                     }
                 }
+                System.out.println();
 
                 //Обрабатываем ход компьютера
                 //Отображаем ход компьютера
@@ -222,7 +224,6 @@ public class LocalGame extends Thread {
     }
 
     //Методы взаимодействия с пользователем
-
     //Метод необходим для переворачивания фишек на экране после очередного хода игрока или компьютера
     private void showChekersList(LinkedList<Coord> coordList, int n) throws InterruptedException {
         for (Coord coord : coordList) {
@@ -254,14 +255,80 @@ public class LocalGame extends Thread {
     }
 
     //Вспомогательные методы
-
     //Метод, реализующий рекурсивный поиск оценки очередного хода
     //На входе:
     //m - позиция на игровом поле, которую требуется оценить
-    //n - цвет фишек, которые будут делать следующий ход
+    //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
     private int getRate(int[][] m, int n, int depth) {
-        return 0;
+        //Размеры переданной методу матрицы
+        int rows = m.length;
+        int cols = m[0].length;
+
+        int pScore=0;    //Количество фишек игрока на игровом поле
+        int cScore=0;    //Количество фишек компьютера на игровом поле
+        int rate=0;      //Рейтинг позиции
+
+        //Переменные, используемые для обнаружения позции, в которой игра считается завершенной
+        boolean pAv = false;        //Равен true, если в матрице есть доступные для игрока (PLAYER Available) ходы
+        boolean cAv = false;        //Равен true, если в матрице есть доступные для компьютера (COMPUTER Available) ходы
+        boolean isEndPos = false;   //Равен true, если позиция в матрице m - конечна
+
+        int content;     //Содержимое ячейки
+
+        //Подсчитываем рейтинг текущей позиции
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                content = m[i][j];
+                switch (content) {
+                    case EMPTY: {
+                        if(!pAv)pAv=isCellAvailable(m, PLAYER, i, j);
+                        if(!cAv)cAv=isCellAvailable(m, COMPUTER, i, j);
+                        break;
+                    }
+                    case PLAYER: {
+                        pScore++;
+                        break;
+                    }
+                    case COMPUTER: {
+                        cScore++;
+                    }
+                }
+            }
+        }
+        isEndPos=!(pAv & cAv);
+
+        //Если полученная в матрице m позиция является финальной (игра окончена, ни у кого из игроков больше нет доступных ходов)
+        if(isEndPos){
+            if(pScore==cScore)return 0;
+            rate=rows*cols;
+            if(pScore>cScore)rate*=-1;
+            return rate;
+        }
+
+        //Если полученная в матрице m позиция не является финальной и дальнейшие ходы игроков возможны
+        if(pScore>cScore)rate=-1;
+        if(pScore==cScore)rate=0;
+        if(pScore<cScore)rate=1;
+
+        //Если достигнута максимальная глубина перебора, то возвращаем результат
+        if(depth==0)return rate;
+
+        //Рекурсивно вычисляем рейтинг для доступных ходов
+        int nNext;    //Цвет фишек, которые ходят следующими
+        if(n==PLAYER & cAv)nNext=COMPUTER; else nNext=PLAYER;
+        if(n==COMPUTER & pAv)nNext=PLAYER; else nNext=COMPUTER;
+
+        //Получаем список доступных ячеек
+        LinkedList<Coord> cellsList=getAvailableCellList(m, nNext);
+
+        //Рекурсивно вычисляем рейтинг
+        for(Coord coord: cellsList){
+            rate+=getRate(getNextMatr(m, nNext, coord.y, coord.x), nNext, depth-1);
+        }
+
+        //Возвращаем результат
+        return rate;
     }
 
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
