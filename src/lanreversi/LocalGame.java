@@ -16,8 +16,9 @@ public class LocalGame extends Thread {
     private static final int COMPUTER = -1;
     private static final int EMPTY = 0;
 
-    //Максимальная глубина перебора, используемая при поиске очередного хода
-    private static final int MAX_DEPTH = 5;
+    //Максимальная и минимальная глубина перебора, используемые при поиске очередного хода
+    private static final int MAX_DEPTH = 6;
+    private static final int MIN_DEPTH = 5;
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
@@ -139,20 +140,43 @@ public class LocalGame extends Thread {
 
             //Второй этап - поиск хода компьютера
             l = getAvailableCellList(m, COMPUTER);
+
+            System.out.println("Доступно ходов компьютеру: "+l.size());
+
             isComputerCellListEmpty = l.isEmpty();
             if (!isComputerCellListEmpty) {
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            gui.setText4("Компьютер (думаю...)");
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (InvocationTargetException ex) {
+                }
                 //Ищем ход с максимальным рейтингом
-                int maxRate = Integer.MIN_VALUE;
-                int rate;
-                coordMaxRate = null;
+                int maxRate = Integer.MIN_VALUE; //Переменная для хранения максимального рейтинга, достижимого из текущего набора доступных ходов
+                int rate;                        //Переменная для хранения рейтинга текущего исследуемого хода
+                int currentDepth=0;              //Текущая глубина перебора
+                coordMaxRate = null;             //Координаты хода с максимальным рейтингом
+                if((l.size()>1) & (l.size()<6))currentDepth=MAX_DEPTH;
+                if(l.size()>=6)currentDepth=MIN_DEPTH;
+
+                System.out.println("  текущая глубина перебора: "+currentDepth);
+
                 for (Coord coord : l) {
-                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, MAX_DEPTH);
-                    System.out.println(rate);
+                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
+
+                    System.out.println("  рейтинг хода: "+rate);
+
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
                     }
                 }
+
                 System.out.println();
 
                 //Обрабатываем ход компьютера
@@ -172,6 +196,12 @@ public class LocalGame extends Thread {
                 l = getRevertCellsList(m, COMPUTER, coordMaxRate.y, coordMaxRate.x);
                 //Отражаем изменения на игровом поле после хода игрока
                 m = getNextMatr(m, COMPUTER, coordMaxRate.y, coordMaxRate.x);
+                //Переворачиваем фишки на экране
+                try {
+                    showChekersList(l, COMPUTER);
+                } catch (InterruptedException ex) {
+                    return;
+                }
                 //Отображаем количество набранных игроком и компьютером очков на табло
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
@@ -179,17 +209,12 @@ public class LocalGame extends Thread {
                         public void run() {
                             gui.setText2("" + getScore(m, PLAYER));
                             gui.setText3("" + getScore(m, COMPUTER));
+                            gui.setText4("Компьютер");
                         }
                     });
                 } catch (InterruptedException ex) {
                     return;
                 } catch (InvocationTargetException ex) {
-                }
-                //Переворачиваем фишки на экране
-                try {
-                    showChekersList(l, COMPUTER);
-                } catch (InterruptedException ex) {
-                    return;
                 }
             }
 
@@ -261,9 +286,9 @@ public class LocalGame extends Thread {
     //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
     private int getRate(int[][] m, int n, int depth) {
-        //Размеры переданной методу матрицы
-        int rows = m.length;
-        int cols = m[0].length;
+        //Получаем размеры переданной в метод матрицы
+        int rows=m.length;
+        int cols=m[0].length;
 
         int pScore=0;    //Количество фишек игрока на игровом поле
         int cScore=0;    //Количество фишек компьютера на игровом поле
@@ -272,7 +297,7 @@ public class LocalGame extends Thread {
         //Переменные, используемые для обнаружения позции, в которой игра считается завершенной
         boolean pAv = false;        //Равен true, если в матрице есть доступные для игрока (PLAYER Available) ходы
         boolean cAv = false;        //Равен true, если в матрице есть доступные для компьютера (COMPUTER Available) ходы
-        boolean isEndPos = false;   //Равен true, если позиция в матрице m - конечна
+        boolean isEndPos;           //Равен true, если позиция в матрице m - конечна
 
         int content;     //Содержимое ячейки
 
@@ -301,7 +326,8 @@ public class LocalGame extends Thread {
         //Если полученная в матрице m позиция является финальной (игра окончена, ни у кого из игроков больше нет доступных ходов)
         if(isEndPos){
             if(pScore==cScore)return 0;
-            rate=rows*cols;
+            rate=10;
+            rate=(int)Math.pow(rate, depth+1);
             if(pScore>cScore)rate*=-1;
             return rate;
         }
