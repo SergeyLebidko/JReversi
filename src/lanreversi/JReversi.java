@@ -13,6 +13,9 @@ public class JReversi{
     private static final int cols=8;
     private static final int rows=8;
 
+    //Тестовые переменные
+    public static int countRate=0;
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override

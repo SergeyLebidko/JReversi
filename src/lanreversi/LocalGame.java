@@ -17,8 +17,8 @@ public class LocalGame extends Thread {
     private static final int EMPTY = 0;
 
     //Максимальная и минимальная глубина перебора, используемые при поиске очередного хода
-    private static final int MAX_DEPTH = 6;
-    private static final int MIN_DEPTH = 5;
+    private static final int MAX_DEPTH = 7;
+    private static final int MIN_DEPTH = 6;
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
@@ -163,6 +163,12 @@ public class LocalGame extends Thread {
                 coordMaxRate = null;             //Координаты хода с максимальным рейтингом
                 if((l.size()>1) & (l.size()<6))currentDepth=MAX_DEPTH;
                 if(l.size()>=6)currentDepth=MIN_DEPTH;
+
+                // ********** Тестовый код **********
+                countRate=0;
+                System.out.println("Доступно ходов: "+l.size());
+                System.out.println("Глубина перебора: "+currentDepth);
+
                 for (Coord coord : l) {
                     rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
                     if (rate > maxRate) {
@@ -170,6 +176,11 @@ public class LocalGame extends Thread {
                         coordMaxRate = coord;
                     }
                 }
+
+                // ********** Тестовый код **********);
+                System.out.println("Оценено ходов: "+countRate);
+                System.out.println();
+
                 //Обрабатываем ход компьютера
                 //Отображаем ход компьютера
                 try {
@@ -332,7 +343,10 @@ public class LocalGame extends Thread {
         if(pScore<cScore)rate=1;
 
         //Если достигнута максимальная глубина перебора, то возвращаем результат
-        if(depth==0)return rate;
+        if(depth==0){
+            countRate++;// ********** Тестовый код **********
+            return rate;
+        }
 
         //Рекурсивно вычисляем рейтинг для доступных ходов
         int nNext;    //Цвет фишек, которые ходят следующими
@@ -348,6 +362,7 @@ public class LocalGame extends Thread {
         }
 
         //Возвращаем результат
+        countRate++;// ********** Тестовый код **********
         return rate;
     }
 

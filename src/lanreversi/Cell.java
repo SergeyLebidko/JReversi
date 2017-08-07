@@ -15,8 +15,8 @@ public class Cell extends JPanel{
     //Раздел цветовых констант
     private final Color bColor=new Color(190, 190, 190);    //Основной цвет фона ячеек
     private final Color eColor=new Color(180, 250, 100);    //Цвет фона ячеек, разрешенных к выбору игроком
-    private final Color s1Color=new Color(85, 85, 250);     //Цвет фона ячейки, в которую при последнем ходе была установлена фишка
-    private final Color s2Color=new Color(85, 150, 250);    //Цвет фона ячейки, в которой шашка была перевернута во время последнего хода
+    private final Color s1Color=new Color(170, 170, 255);   //Цвет фона ячейки, в которую при последнем ходе была установлена фишка
+    private final Color s2Color=new Color(190, 220, 255);   //Цвет фона ячейки, в которой шашка была перевернута во время последнего хода
 
     //Признак ячейки, разрешенной для очередного хода игрока. По-умолчанию, все ячейки являются запрещенными
     private boolean enabled=false;
