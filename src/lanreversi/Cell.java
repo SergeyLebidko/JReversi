@@ -14,10 +14,16 @@ public class Cell extends JPanel{
 
     //Раздел цветовых констант
     private final Color bColor=new Color(190, 190, 190);    //Основной цвет фона ячеек
-    private final Color eColor=new Color(180, 250, 100);    //Цвет фона выделенных ячеек
+    private final Color eColor=new Color(180, 250, 100);    //Цвет фона ячеек, разрешенных к выбору игроком
+    private final Color s1Color=new Color(85, 85, 250);     //Цвет фона ячейки, в которую при последнем ходе была установлена фишка
+    private final Color s2Color=new Color(85, 150, 250);    //Цвет фона ячейки, в которой шашка была перевернута во время последнего хода
 
     //Признак ячейки, разрешенной для очередного хода игрока. По-умолчанию, все ячейки являются запрещенными
     private boolean enabled=false;
+
+    //Дополнительные признаки фонового цвета
+    private boolean s1Background=false;
+    private boolean s2Background=false;
 
     //Содержимое ячеек: пустая, с черной шашкой, с белой шашкой
     public static final int EMPTY=0;
@@ -79,7 +85,7 @@ public class Cell extends JPanel{
         repaint();
     }
 
-    //Установка признака разрешенной ячейкиъ
+    //Установка признака разрешенной ячейки
     public void setEnabledCell(boolean e){
         if(e==enabled)return;
         enabled=e;
@@ -91,6 +97,36 @@ public class Cell extends JPanel{
         return enabled;
     }
 
+    //Методы установки дополнительных цветов фона
+    //Ячейка будет иметь последний назначенный ей цвет фона,
+    //но при следующей отрисовке ячейки признак цвета сбросится.
+    //Также необходимо учитывать, что метод setEnabledCell имеет приоритет в установке цвета над следующими ниже setS... методами
+    public void setS1Background(){
+        s1Background=true;
+        s2Background=false;
+    }
+
+    public void setS2Background(){
+        s1Background=false;
+        s2Background=true;
+    }
+
+    //Методы получения признаков установки дополнительных цветов фона
+    public boolean isS1Background() {
+        return s1Background;
+    }
+
+    public boolean isS2Background() {
+        return s2Background;
+    }
+
+    //Метод устанавливает стандартный цвет фона для ячейки
+    public void clearBackgroundColor(){
+        s1Background=false;
+        s2Background=false;
+        repaint();
+    }
+
     //Метод отрисовывает компонент
     @Override
     public void paintComponent(Graphics g){
@@ -100,8 +136,14 @@ public class Cell extends JPanel{
         int w=this.getSize().width;
         int h=this.getSize().height;
 
-        //Установка фона ячейки в зависимости от ее стиля и контента
-        if(!enabled)g2.setColor(bColor);
+        //Установка фона ячейки в зависимости от ее стиля и контента и дополнительных цветовых флагов
+        g2.setColor(bColor);
+        if(s1Background){
+            g2.setColor(s1Color);
+        }
+        if(s2Background){
+            g2.setColor(s2Color);
+        }
         if(enabled)g2.setColor(eColor);
         g2.fillRect(0, 0, w, h);
 

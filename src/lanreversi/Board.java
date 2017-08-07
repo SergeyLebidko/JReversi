@@ -51,7 +51,7 @@ public final class Board extends JPanel{
                 c[i][j].setContent(Cell.EMPTY);
                 c[i][j].setStyle(currentStyle);
                 c[i][j].setEnabledCell(false);
-
+                c[i][j].clearBackgroundColor();
             }
         c[rows/2-1][cols/2-1].setContent(playerColor);
         c[rows/2][cols/2].setContent(playerColor);
@@ -106,6 +106,29 @@ public final class Board extends JPanel{
         int x=coord.x;
         int y=coord.y;
         if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setContent(opponentColor);
+    }
+
+    //Метод устанавливает первый дополнительный цвет фона
+    public void setS1Background(Coord coord){
+        int x=coord.x;
+        int y=coord.y;
+        if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setS1Background();
+    }
+
+    //Метод устанавливает второй дополнительный цвет фона
+    public void setS2Background(Coord coord){
+        int x=coord.x;
+        int y=coord.y;
+        if((y>=0) & (y<=rows) & (x>=0) & (x<=cols))c[y][x].setS2Background();
+    }
+
+    //Метод удаляет дополнительные цвета фона
+    public void clearBackgroundColors(){
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<cols;j++){
+                if(c[i][j].isS1Background() | c[i][j].isS2Background())c[i][j].clearBackgroundColor();
+            }
+        }
     }
 
     //Метод делает доступными для выбора игроком переданные ему ячейки. Если coord пуст или равен null, все ячейки помечаются, как недоступные

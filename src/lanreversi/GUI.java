@@ -179,6 +179,20 @@ public class GUI {
         board.setEnabledCells(coords);
     }
 
+    //Методы устанавливают дополнительные цвета фона ячеек
+    public void setS1Background(Coord coord) {
+        board.setS1Background(coord);
+    }
+
+    public void setS2Background(Coord coord) {
+        board.setS2Background(coord);
+    }
+
+    //Метод сбрасывает дополнительные цвета фона ячеек, если они имеются
+    public void clearBackgroundColors() {
+        board.clearBackgroundColors();
+    }
+
     //Метод вызывается при щелче мышкой по разрешенной ячейке и передает координаты ячейки в объект класса LocalGame
     public void playerStroke(Coord coord) {
         if (localGame != null) {

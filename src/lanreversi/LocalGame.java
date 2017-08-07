@@ -106,7 +106,10 @@ public class LocalGame extends Thread {
                         @Override
                         public void run() {
                             gui.setEnabledCells(null);
-                            gui.setPlayerChecker(new Coord(yStroke, xStroke));
+                            gui.clearBackgroundColors();
+                            Coord coordStroke=new Coord(yStroke, xStroke);
+                            gui.setS1Background(coordStroke);
+                            gui.setPlayerChecker(coordStroke);
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -140,9 +143,6 @@ public class LocalGame extends Thread {
 
             //Второй этап - поиск хода компьютера
             l = getAvailableCellList(m, COMPUTER);
-
-            System.out.println("Доступно ходов компьютеру: "+l.size());
-
             isComputerCellListEmpty = l.isEmpty();
             if (!isComputerCellListEmpty) {
                 try {
@@ -163,28 +163,21 @@ public class LocalGame extends Thread {
                 coordMaxRate = null;             //Координаты хода с максимальным рейтингом
                 if((l.size()>1) & (l.size()<6))currentDepth=MAX_DEPTH;
                 if(l.size()>=6)currentDepth=MIN_DEPTH;
-
-                System.out.println("  текущая глубина перебора: "+currentDepth);
-
                 for (Coord coord : l) {
                     rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
-
-                    System.out.println("  рейтинг хода: "+rate);
-
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
                     }
                 }
-
-                System.out.println();
-
                 //Обрабатываем ход компьютера
                 //Отображаем ход компьютера
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
+                            gui.clearBackgroundColors();
+                            gui.setS1Background(coordMaxRate);
                             gui.setOpponentChecker(coordMaxRate);
                         }
                     });
@@ -256,6 +249,7 @@ public class LocalGame extends Thread {
                 SwingUtilities.invokeAndWait(new Runnable() {
                     @Override
                     public void run() {
+                        gui.setS2Background(coord);
                         if (n == PLAYER) {
                             gui.setPlayerChecker(coord);
                         }
