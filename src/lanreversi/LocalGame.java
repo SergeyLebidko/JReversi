@@ -17,8 +17,8 @@ public class LocalGame extends Thread {
     private static final int EMPTY = 0;
 
     //Максимальная и минимальная глубина перебора, используемые при поиске очередного хода
-    private static final int MAX_DEPTH = 7;
-    private static final int MIN_DEPTH = 6;
+    private static final int MAX_DEPTH = 6;
+    private static final int MIN_DEPTH = 5;
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
@@ -165,7 +165,7 @@ public class LocalGame extends Thread {
                 if(l.size()>=6)currentDepth=MIN_DEPTH;
 
                 // ********** Тестовый код **********
-                countRate=0;
+                totalCount=0;
                 System.out.println("Доступно ходов: "+l.size());
                 System.out.println("Глубина перебора: "+currentDepth);
 
@@ -178,7 +178,7 @@ public class LocalGame extends Thread {
                 }
 
                 // ********** Тестовый код **********);
-                System.out.println("Оценено ходов: "+countRate);
+                System.out.println("Оценено ходов: "+totalCount);
                 System.out.println();
 
                 //Обрабатываем ход компьютера
@@ -291,6 +291,9 @@ public class LocalGame extends Thread {
     //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
     private int getRate(int[][] m, int n, int depth) {
+
+        totalCount++;// ********** Тестовый код **********
+
         //Получаем размеры переданной в метод матрицы
         int rows=m.length;
         int cols=m[0].length;
@@ -343,10 +346,7 @@ public class LocalGame extends Thread {
         if(pScore<cScore)rate=1;
 
         //Если достигнута максимальная глубина перебора, то возвращаем результат
-        if(depth==0){
-            countRate++;// ********** Тестовый код **********
-            return rate;
-        }
+        if(depth==0)return rate;
 
         //Рекурсивно вычисляем рейтинг для доступных ходов
         int nNext;    //Цвет фишек, которые ходят следующими
@@ -362,7 +362,6 @@ public class LocalGame extends Thread {
         }
 
         //Возвращаем результат
-        countRate++;// ********** Тестовый код **********
         return rate;
     }
 
