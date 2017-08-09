@@ -365,6 +365,11 @@ public class LocalGame extends Thread {
         return rate;
     }
 
+    //Версия метода getRate, использующая для поиска оптимального хода алгоритм альфа-бета отсечения
+    private int getRateAB(int[][] m, int n, int depth, int a, int b){
+        return 0;
+    }
+
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
     private LinkedList<Coord> getRevertCellsList(int[][] m0, int n, int y, int x) {
         LinkedList<Coord> res = new LinkedList<>();
