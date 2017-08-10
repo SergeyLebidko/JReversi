@@ -170,7 +170,7 @@ public class LocalGame extends Thread {
                 System.out.println("Глубина перебора: "+currentDepth);
 
                 for (Coord coord : l) {
-                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
+                    rate = getRateMINMAX(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
@@ -290,13 +290,13 @@ public class LocalGame extends Thread {
     //m - позиция на игровом поле, которую требуется оценить
     //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
-    private int getRate(int[][] m, int n, int depth) {
+    private int getRate(int[][] m0, int n, int depth) {
 
         totalCount++;// ********** Тестовый код **********
 
         //Получаем размеры переданной в метод матрицы
-        int rows=m.length;
-        int cols=m[0].length;
+        int rows=m0.length;
+        int cols=m0[0].length;
 
         int pScore=0;    //Количество фишек игрока на игровом поле
         int cScore=0;    //Количество фишек компьютера на игровом поле
@@ -305,18 +305,18 @@ public class LocalGame extends Thread {
         //Переменные, используемые для обнаружения позции, в которой игра считается завершенной
         boolean pAv = false;        //Равен true, если в матрице есть доступные для игрока (PLAYER Available) ходы
         boolean cAv = false;        //Равен true, если в матрице есть доступные для компьютера (COMPUTER Available) ходы
-        boolean isEndPos;           //Равен true, если позиция в матрице m - конечна
+        boolean isEndPos;           //Равен true, если позиция в матрице m0 - конечна
 
         int content;     //Содержимое ячейки
 
         //Подсчитываем рейтинг текущей позиции
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                content = m[i][j];
+                content = m0[i][j];
                 switch (content) {
                     case EMPTY: {
-                        if(!pAv)pAv=isCellAvailable(m, PLAYER, i, j);
-                        if(!cAv)cAv=isCellAvailable(m, COMPUTER, i, j);
+                        if(!pAv)pAv=isCellAvailable(m0, PLAYER, i, j);
+                        if(!cAv)cAv=isCellAvailable(m0, COMPUTER, i, j);
                         break;
                     }
                     case PLAYER: {
@@ -331,7 +331,7 @@ public class LocalGame extends Thread {
         }
         isEndPos=!(pAv & cAv);
 
-        //Если полученная в матрице m позиция является финальной (игра окончена, ни у кого из игроков больше нет доступных ходов)
+        //Если полученная в матрице m0 позиция является финальной (игра окончена, ни у кого из игроков больше нет доступных ходов)
         if(isEndPos){
             if(pScore==cScore)return 0;
             rate=10;
@@ -340,7 +340,7 @@ public class LocalGame extends Thread {
             return rate;
         }
 
-        //Если полученная в матрице m позиция не является финальной и дальнейшие ходы игроков возможны
+        //Если полученная в матрице m0 позиция не является финальной и дальнейшие ходы игроков возможны
         if(pScore>cScore)rate=-1;
         if(pScore==cScore)rate=0;
         if(pScore<cScore)rate=1;
@@ -354,11 +354,11 @@ public class LocalGame extends Thread {
         if(n==COMPUTER & pAv)nNext=PLAYER; else nNext=COMPUTER;
 
         //Получаем список доступных ячеек
-        LinkedList<Coord> cellsList=getAvailableCellList(m, nNext);
+        LinkedList<Coord> cellsList=getAvailableCellList(m0, nNext);
 
         //Рекурсивно вычисляем рейтинг
         for(Coord coord: cellsList){
-            rate+=getRate(getNextMatr(m, nNext, coord.y, coord.x), nNext, depth-1);
+            rate+=getRate(getNextMatr(m0, nNext, coord.y, coord.x), nNext, depth-1);
         }
 
         //Возвращаем результат
@@ -366,25 +366,25 @@ public class LocalGame extends Thread {
     }
 
     //Версия метода getRate, использующая для поиска оптимального хода алгоритм минимакса
-    private int getRateMINMAX(int[][] m, int n, int depth){
+    private int getRateMINMAX(int[][] m0, int n, int depth){
 
         totalCount++;// ********** Тестовый код **********
 
         //Получаем размеры переданной в метод матрицы
-        int rows=m.length;
-        int cols=m[0].length;
+        int rows=m0.length;
+        int cols=m0[0].length;
 
         int rate=0;      //Рейтинг позиции
 
-        boolean bitPlayer=false;      //Равен true, если у игрока есть ходы из позиции m
-        boolean bitComputer=false;    //Равен true, если у компьютера есть ходы из позиции m
+        boolean bitPlayer=false;      //Равен true, если у игрока есть ходы из позиции m0
+        boolean bitComputer=false;    //Равен true, если у компьютера есть ходы из позиции m0
 
-        //Проверяем, является ли позиция в m конечной
+        //Проверяем, является ли позиция в m0 конечной
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
-                rate+=m[i][j];
-                if(!bitPlayer)bitPlayer=isCellAvailable(m, PLAYER, i, j);
-                if(!bitComputer)bitComputer=isCellAvailable(m, COMPUTER, i, j);
+                rate+=m0[i][j];
+                if(!bitPlayer)bitPlayer=isCellAvailable(m0, PLAYER, i, j);
+                if(!bitComputer)bitComputer=isCellAvailable(m0, COMPUTER, i, j);
             }
         }
 
@@ -396,7 +396,39 @@ public class LocalGame extends Thread {
         //Второй признак конечной позиции - достижение максимальной глубины перебора
         if(depth==0)return rate*Math.abs(rate);
 
-        return 0;
+        //Если конечная позиция не достигнута, то продолжаем рекурсивный перебор ходов. Сперва определяем, кто должен ходить следующим
+        int nNext=0;
+        switch(n){
+            case PLAYER:{
+                nNext=(bitComputer?COMPUTER:PLAYER);
+                break;
+            }
+            case COMPUTER:{
+                nNext=(bitPlayer?PLAYER:COMPUTER);
+            }
+        }
+
+        //В зависимости от того, кто из игроков ходит мы будем искать максимальный (ходит компьютер) или минимальный (ходит игрок) рейтинг
+        if(nNext==PLAYER)rate=Integer.MAX_VALUE;
+        if(nNext==COMPUTER)rate=Integer.MIN_VALUE;
+
+        //Получаем список доступных ходов
+        LinkedList<Coord> moveList=getAvailableCellList(m0, nNext);
+
+        //Перебираем ходы
+        int rateTmp;
+        for(Coord coord: moveList){
+            rateTmp=getRateMINMAX(getNextMatr(m0, nNext, coord.y, coord.x), nNext, depth-1);
+            if(nNext==PLAYER){
+                rate=Math.min(rate, rateTmp);
+            }
+            if(nNext==COMPUTER){
+                rate=Math.max(rate, rateTmp);
+            }
+        }
+
+        //Возвращаем оценку текущего хода
+        return rate;
     }
 
     //Метод возвращает список ячеек, которые перевернутся после хода y,x в матрицу m0 фишкой цвета n
