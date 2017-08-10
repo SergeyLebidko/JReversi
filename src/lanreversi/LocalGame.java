@@ -12,8 +12,8 @@ public class LocalGame extends Thread {
     private int[][] m;
 
     //Константы для представления содержимого ячеек игрового поля
-    private static final int PLAYER = 1;
-    private static final int COMPUTER = -1;
+    private static final int PLAYER = -1;
+    private static final int COMPUTER = 1;
     private static final int EMPTY = 0;
 
     //Максимальная и минимальная глубина перебора, используемые при поиске очередного хода
@@ -365,8 +365,37 @@ public class LocalGame extends Thread {
         return rate;
     }
 
-    //Версия метода getRate, использующая для поиска оптимального хода алгоритм альфа-бета отсечения
-    private int getRateAB(int[][] m, int n, int depth, int a, int b){
+    //Версия метода getRate, использующая для поиска оптимального хода алгоритм минимакса
+    private int getRateMINMAX(int[][] m, int n, int depth){
+
+        totalCount++;// ********** Тестовый код **********
+
+        //Получаем размеры переданной в метод матрицы
+        int rows=m.length;
+        int cols=m[0].length;
+
+        int rate=0;      //Рейтинг позиции
+
+        boolean bitPlayer=false;      //Равен true, если у игрока есть ходы из позиции m
+        boolean bitComputer=false;    //Равен true, если у компьютера есть ходы из позиции m
+
+        //Проверяем, является ли позиция в m конечной
+        for(int i=0;i<rows;i++){
+            for(int j=0;j<cols;j++){
+                rate+=m[i][j];
+                if(!bitPlayer)bitPlayer=isCellAvailable(m, PLAYER, i, j);
+                if(!bitComputer)bitComputer=isCellAvailable(m, COMPUTER, i, j);
+            }
+        }
+
+        //Первый признак конечной позиции - отсутствие доступных ходов у обоих игроков
+        if(!(bitPlayer | bitComputer)){
+            return Integer.compare(rate, 0)*(rows*cols+1);
+        }
+
+        //Второй признак конечной позиции - достижение максимальной глубины перебора
+        if(depth==0)return rate*Math.abs(rate);
+
         return 0;
     }
 
