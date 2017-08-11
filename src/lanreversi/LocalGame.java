@@ -170,7 +170,7 @@ public class LocalGame extends Thread {
                 System.out.println("Глубина перебора: "+currentDepth);
 
                 for (Coord coord : l) {
-                    rate = getRateMINMAX(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
+                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
@@ -290,83 +290,7 @@ public class LocalGame extends Thread {
     //m - позиция на игровом поле, которую требуется оценить
     //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
-    private int getRate(int[][] m0, int n, int depth) {
-
-        totalCount++;// ********** Тестовый код **********
-
-        //Получаем размеры переданной в метод матрицы
-        int rows=m0.length;
-        int cols=m0[0].length;
-
-        int pScore=0;    //Количество фишек игрока на игровом поле
-        int cScore=0;    //Количество фишек компьютера на игровом поле
-        int rate=0;      //Рейтинг позиции
-
-        //Переменные, используемые для обнаружения позции, в которой игра считается завершенной
-        boolean pAv = false;        //Равен true, если в матрице есть доступные для игрока (PLAYER Available) ходы
-        boolean cAv = false;        //Равен true, если в матрице есть доступные для компьютера (COMPUTER Available) ходы
-        boolean isEndPos;           //Равен true, если позиция в матрице m0 - конечна
-
-        int content;     //Содержимое ячейки
-
-        //Подсчитываем рейтинг текущей позиции
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                content = m0[i][j];
-                switch (content) {
-                    case EMPTY: {
-                        if(!pAv)pAv=isCellAvailable(m0, PLAYER, i, j);
-                        if(!cAv)cAv=isCellAvailable(m0, COMPUTER, i, j);
-                        break;
-                    }
-                    case PLAYER: {
-                        pScore++;
-                        break;
-                    }
-                    case COMPUTER: {
-                        cScore++;
-                    }
-                }
-            }
-        }
-        isEndPos=!(pAv & cAv);
-
-        //Если полученная в матрице m0 позиция является финальной (игра окончена, ни у кого из игроков больше нет доступных ходов)
-        if(isEndPos){
-            if(pScore==cScore)return 0;
-            rate=10;
-            rate=(int)Math.pow(rate, depth+1);
-            if(pScore>cScore)rate*=-1;
-            return rate;
-        }
-
-        //Если полученная в матрице m0 позиция не является финальной и дальнейшие ходы игроков возможны
-        if(pScore>cScore)rate=-1;
-        if(pScore==cScore)rate=0;
-        if(pScore<cScore)rate=1;
-
-        //Если достигнута максимальная глубина перебора, то возвращаем результат
-        if(depth==0)return rate;
-
-        //Рекурсивно вычисляем рейтинг для доступных ходов
-        int nNext;    //Цвет фишек, которые ходят следующими
-        if(n==PLAYER & cAv)nNext=COMPUTER; else nNext=PLAYER;
-        if(n==COMPUTER & pAv)nNext=PLAYER; else nNext=COMPUTER;
-
-        //Получаем список доступных ячеек
-        LinkedList<Coord> cellsList=getAvailableCellList(m0, nNext);
-
-        //Рекурсивно вычисляем рейтинг
-        for(Coord coord: cellsList){
-            rate+=getRate(getNextMatr(m0, nNext, coord.y, coord.x), nNext, depth-1);
-        }
-
-        //Возвращаем результат
-        return rate;
-    }
-
-    //Версия метода getRate, использующая для поиска оптимального хода алгоритм минимакса
-    private int getRateMINMAX(int[][] m0, int n, int depth){
+    private int getRate(int[][] m0, int n, int depth){
 
         totalCount++;// ********** Тестовый код **********
 
@@ -383,6 +307,7 @@ public class LocalGame extends Thread {
         for(int i=0;i<rows;i++){
             for(int j=0;j<cols;j++){
                 rate+=m0[i][j];
+                if(m0[i][j]!=EMPTY)continue;
                 if(!bitPlayer)bitPlayer=isCellAvailable(m0, PLAYER, i, j);
                 if(!bitComputer)bitComputer=isCellAvailable(m0, COMPUTER, i, j);
             }
@@ -417,8 +342,8 @@ public class LocalGame extends Thread {
 
         //Перебираем ходы
         int rateTmp;
-        for(Coord coord: moveList){
-            rateTmp=getRateMINMAX(getNextMatr(m0, nNext, coord.y, coord.x), nNext, depth-1);
+        for(Coord move: moveList){
+            rateTmp=getRate(getNextMatr(m0, nNext, move.y, move.x), nNext, depth-1);
             if(nNext==PLAYER){
                 rate=Math.min(rate, rateTmp);
             }

@@ -10,8 +10,8 @@ public class JReversi{
     public static String playerName="";    //Имя игрока
 
     //Размеры игрового поля
-    private static final int cols=10;
-    private static final int rows=10;
+    private static final int cols=8;
+    private static final int rows=8;
 
     //Тестовые переменные
     public static int totalCount=0;
