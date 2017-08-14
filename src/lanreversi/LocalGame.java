@@ -2,6 +2,8 @@ package lanreversi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import static lanreversi.JReversi.*;
 
@@ -159,6 +161,11 @@ public class LocalGame extends Thread {
                 } catch (InterruptedException ex) {
                     return;
                 } catch (InvocationTargetException ex) {
+                }
+                try {
+                    Thread.sleep(400);
+                } catch (InterruptedException ex) {
+                    return;
                 }
                 //Ищем ход с максимальным рейтингом
                 int maxRate = Integer.MIN_VALUE; //Переменная для хранения максимального рейтинга, достижимого из текущего набора доступных ходов
