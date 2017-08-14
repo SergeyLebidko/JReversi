@@ -17,8 +17,12 @@ public class LocalGame extends Thread {
     private static final int EMPTY = 0;
 
     //Максимальная и минимальная глубина перебора, используемые при поиске очередного хода
-    private static final int MAX_DEPTH = 6;
-    private static final int MIN_DEPTH = 5;
+    private static final int MAX_DEPTH = 7;
+    private static final int MIN_DEPTH = 6;
+
+    //Параметры поиска ходов
+    private static final int MAX_SEEK = 1;    //Поиск максимума (хода с максимальной оценкой)
+    private static final int MIN_SEEK = 2;    //Поиск минимума (хода с минимальной оценкой)
 
     private Coord playerStroke = null;    //Координаты клетки, в которую походил игрок
 
@@ -163,24 +167,13 @@ public class LocalGame extends Thread {
                 coordMaxRate = null;             //Координаты хода с максимальным рейтингом
                 if((l.size()>1) & (l.size()<6))currentDepth=MAX_DEPTH;
                 if(l.size()>=6)currentDepth=MIN_DEPTH;
-
-                // ********** Тестовый код **********
-                totalCount=0;
-                System.out.println("Доступно ходов: "+l.size());
-                System.out.println("Глубина перебора: "+currentDepth);
-
                 for (Coord coord : l) {
-                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth);
+                    rate = getRate(getNextMatr(m, COMPUTER, coord.y, coord.x), COMPUTER, currentDepth, MAX_SEEK, Integer.MIN_VALUE);
                     if (rate > maxRate) {
                         maxRate = rate;
                         coordMaxRate = coord;
                     }
                 }
-
-                // ********** Тестовый код **********);
-                System.out.println("Оценено ходов: "+totalCount);
-                System.out.println();
-
                 //Обрабатываем ход компьютера
                 //Отображаем ход компьютера
                 try {
@@ -290,10 +283,9 @@ public class LocalGame extends Thread {
     //m - позиция на игровом поле, которую требуется оценить
     //n - цвет фишек, которые сделали ход
     //depth - текущая глубина рекурсии (если равна 0, рекурсивные вызовы прекращаются)
-    private int getRate(int[][] m0, int n, int depth){
-
-        totalCount++;// ********** Тестовый код **********
-
+    //flag - флаг, указывающий, что мы ищем на верхнем уровне рекурсии: максимумальное или минимальное значение рейтинга хода
+    //val - максимальное или минимальное значение рейтинга хода, найденное на верхнем уровне рекурсии
+    private int getRate(int[][] m0, int n, int depth, int flag, int val){
         //Получаем размеры переданной в метод матрицы
         int rows=m0.length;
         int cols=m0[0].length;
@@ -343,12 +335,20 @@ public class LocalGame extends Thread {
         //Перебираем ходы
         int rateTmp;
         for(Coord move: moveList){
-            rateTmp=getRate(getNextMatr(m0, nNext, move.y, move.x), nNext, depth-1);
+            rateTmp=getRate(getNextMatr(m0, nNext, move.y, move.x), nNext, depth-1, (nNext==PLAYER?MIN_SEEK:MAX_SEEK), rate);
             if(nNext==PLAYER){
                 rate=Math.min(rate, rateTmp);
+
+                if(flag==MAX_SEEK){
+                    if(rate<val)return rate;
+                }
             }
             if(nNext==COMPUTER){
                 rate=Math.max(rate, rateTmp);
+
+                if(flag==MIN_SEEK){
+                    if(rate>val)return rate;
+                }
             }
         }
 
